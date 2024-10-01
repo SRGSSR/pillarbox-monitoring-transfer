@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for semantic-release
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '22'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install semantic-release
+        run: npm install -g @semantic-release/commit-analyzer@13.0.0 \
+                            @semantic-release/release-notes-generator@14.0.1 \
+                            @semantic-release/changelog@6.0.3 \
+                            @semantic-release/exec@6.0.3 \
+                            @semantic-release/git@10.0.1 \
+                            @semantic-release/github@11.0.0 \
+                            semantic-release@24.1.2 \
+                            conventional-changelog-conventionalcommits@7.0.2
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release

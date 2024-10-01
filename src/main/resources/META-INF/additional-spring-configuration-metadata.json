@@ -1,0 +1,10 @@
+{
+  "properties": [
+    {
+      "name": "management.health.benchmark.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable or disable benchmark health indicator.",
+      "defaultValue": false
+    }
+  ]
+}

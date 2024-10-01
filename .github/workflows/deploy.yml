@@ -1,0 +1,32 @@
+name: Publish Production Image
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    env:
+      ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GH_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Image
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: ${{ env.ECR_REGISTRY }}/pillarbox-monitoring-dispatch:${{ github.ref_name }}
