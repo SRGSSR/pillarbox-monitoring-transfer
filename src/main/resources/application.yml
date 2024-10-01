@@ -1,0 +1,20 @@
+spring:
+  threads.virtual.enabled: true
+  application.name: pillarbox-monitoring-transfer
+
+pillarbox.qos:
+  sse.uri: "http://localhost:8080/events"
+  opensearch.uri: "http://localhost:9200"
+
+server:
+  port: 8081
+  http2.enabled: true
+  compression.enabled: true
+
+management:
+  endpoints.web.exposure.include: health
+  endpoint.health.show-details: always
+  health.benchmark.enabled: true
+
+logging.level:
+  ch.srgssr.pillarbox.qos: INFO

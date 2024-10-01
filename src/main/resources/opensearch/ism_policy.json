@@ -1,0 +1,41 @@
+{
+  "policy": {
+    "description": "Policy for managing actions indices",
+    "default_state": "hot",
+    "states": [
+      {
+        "name": "hot",
+        "actions": [
+          {
+            "rollover": {
+              "min_index_age": "14d"
+            }
+          }
+        ],
+        "transitions": [
+          {
+            "state_name": "delete",
+            "conditions": {
+              "min_index_age": "14d"
+            }
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "actions": [
+          {
+            "delete": {}
+          }
+        ],
+        "transitions": []
+      }
+    ],
+    "ism_template": {
+      "index_patterns": [
+        "actions*"
+      ],
+      "priority": 100
+    }
+  }
+}
