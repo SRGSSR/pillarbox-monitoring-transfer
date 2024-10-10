@@ -1,3 +1,17 @@
+## [2.0.0](https://github.com/SRGSSR/pillarbox-monitoring-transfer/compare/v1.0.0...v2.0.0) (2024-10-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* Updated all package names and configuration from `pillarbox.qos` to
+`pillarbox.monitoring`. This includes changes to environment variables, which now use the
+prefix `PILLARBOX_MONITORING_*` instead of `PILLARBOX_QOS_*`. Ensure that all relevant
+configurations are updated to reflect this change when deploying or running the service.
+
+### Refactor 🔩
+
+* change qos naming to monitoring ([f50a26c](https://github.com/SRGSSR/pillarbox-monitoring-transfer/commit/f50a26cb9c97179553956e362cdafdf2a6aeacc8))
+
 ## 1.0.0 (2024-10-09)
 
 
