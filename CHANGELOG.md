@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/SRGSSR/pillarbox-monitoring-transfer/compare/v2.0.0...v2.0.1) (2024-10-10)
+
+
+### Enhancements and Bug Fixes 🐛
+
+* disable ktlint for the docker build step ([6d1a467](https://github.com/SRGSSR/pillarbox-monitoring-transfer/commit/6d1a467c5a62f924ae5dfef7c2a117adfca21b37))
+
 ## [2.0.0](https://github.com/SRGSSR/pillarbox-monitoring-transfer/compare/v1.0.0...v2.0.0) (2024-10-10)
 
 
