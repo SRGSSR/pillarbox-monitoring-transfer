@@ -5,7 +5,7 @@ WORKDIR /app
 COPY gradle.properties .
 COPY build.gradle.kts .
 COPY src ./src
-RUN gradle clean build -x test -x detekt
+RUN gradle clean build -x test -x check
 
 # Second stage: Slim runtime image with optimized settings
 FROM eclipse-temurin:22-jre-alpine
