@@ -48,13 +48,22 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npx semantic-release
-          VERSION=$(cat VERSION)
-          echo "Resolved version: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check version
+        id: check_version
+        run: |
+          if [ -f VERSION ]; then
+            VERSION=$(cat VERSION)
+            echo "Resolved version: $VERSION"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "No version produced."
+            echo "version=" >> $GITHUB_OUTPUT
 
   deploy:
     runs-on: ubuntu-latest
     needs: release
+    if: needs.release.outputs.version != ''  # Skip deploy if no version is set
     permissions:
       id-token: write
     env:
