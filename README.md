@@ -104,8 +104,8 @@ Here’s a more concise description of the GitHub Actions setup without listing 
 
 ### Continuous Integration
 
-This project automates its development workflow using GitHub Actions across three main workflows:
-quality checks, releases, and deployments.
+This project automates its development workflow using GitHub Actions across two main workflows:
+quality checks and releases.
 
 1. **Quality Check for Pull Requests**
    Triggered on every pull request to the `main` branch, this workflow ensures the code passes
@@ -114,12 +114,8 @@ quality checks, releases, and deployments.
 
 2. **Release Workflow**
    When changes are pushed to the `main` branch, this workflow handles versioning and releases using
-   `semantic-release`. It automatically bumps the version, generates release notes, and pushes
-   updates to the repository.
-
-3. **Deployment Workflow**
-   This workflow is triggered whenever a tag is created. It builds the Docker image for the service
-   and pushes the image to an Amazon ECR repository.
+   `semantic-release`. It automatically bumps the version, generates release notes, creates a tag,
+   and publishes a Docker image to an Amazon ECR repository.
 
 ## Contributing
 
@@ -162,7 +158,11 @@ Refer to our [Contribution Guide](docs/CONTRIBUTING.md) for more detailed inform
 This project is licensed under the [MIT License](LICENSE).
 
 [main-entry-point]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/PillarboxDataTransferApplication.kt
+
 [health-indicator]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/health/BenchmarkHealthIndicator.kt
+
 [lock-manager]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/concurrent/LockManager.kt
+
 [setup-service]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/SetupService.kt
+
 [sse-client]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/SseClient.kt

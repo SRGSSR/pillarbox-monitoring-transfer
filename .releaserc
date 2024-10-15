@@ -78,23 +78,10 @@
       }
     ],
     [
-      "@semantic-release/changelog",
-      {
-        "changelogFile": "CHANGELOG.md"
-      }
-    ],
-    [
       "@semantic-release/exec",
       {
-        "prepareCmd": "./gradlew release -Pversion=${nextRelease.version}",
+        "prepareCmd": "./gradlew clean release -Pversion=${nextRelease.version}",
         "successCmd": "echo ${nextRelease.version} > VERSION"
-      }
-    ],
-    [
-      "@semantic-release/git",
-      {
-        "assets": ["build.gradle.kts", "gradle.properties", "CHANGELOG.md"],
-        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
     [
@@ -103,6 +90,14 @@
         "assets": [
           {
             "path": "build/libs/pillarbox-monitoring-transfer.jar"
+          },
+          {
+            "path": "LICENSE",
+            "label": "License"
+          },
+          {
+            "path": "README.md",
+            "label": "Readme"
           }
         ]
       }
