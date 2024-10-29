@@ -108,7 +108,7 @@ jobs:
       - name: ECS deployment
         run: >
           aws ecs update-service \
-            --cluster pillarbox-monitoring \
+            --cluster pillarbox-monitoring-cluster \
             --service data-transfer-service \
             --force-new-deployment \
             --region ${{ secrets.AWS_REGION }}

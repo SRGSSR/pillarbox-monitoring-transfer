@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Enter the version tag to promote as stable (e.g., v1.0.0)"
+        description: "Enter the version to promote as stable (e.g., 1.0.0)"
         required: true
         type: string
 
@@ -39,7 +39,7 @@ jobs:
       - name: ECS deployment
         run: >
           aws ecs update-service \
-            --cluster pillarbox-monitoring \
+            --cluster pillarbox-monitoring-cluster \
             --service data-transfer-service \
             --force-new-deployment \
             --region ${{ secrets.AWS_REGION }}
