@@ -8,7 +8,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.semantic-release.outputs.version }}
+      version: ${{ steps.check-version.outputs.version }}
 
     permissions:
       contents: write
@@ -50,7 +50,7 @@ jobs:
           npx semantic-release
 
       - name: Check version
-        id: check_version
+        id: check-version
         run: >
           if [ -f VERSION ]; then
             VERSION=$(cat VERSION)
@@ -108,7 +108,7 @@ jobs:
       - name: ECS deployment
         run: >
           aws ecs update-service \
-            --cluster pillarbox-monitoring \
+            --cluster pillarbox-monitoring-cluster \
             --service data-transfer-service \
             --force-new-deployment \
             --region ${{ secrets.AWS_REGION }}
