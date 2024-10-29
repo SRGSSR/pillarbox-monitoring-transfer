@@ -42,4 +42,4 @@ jobs:
             --cluster pillarbox-monitoring-cluster \
             --service data-transfer-service \
             --force-new-deployment \
-            --region ${{ secrets.AWS_REGION }}
+            --region ${{ secrets.AWS_REGION }} >/dev/null
