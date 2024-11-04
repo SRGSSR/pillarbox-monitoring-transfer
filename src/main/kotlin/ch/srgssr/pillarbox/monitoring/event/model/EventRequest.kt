@@ -54,7 +54,7 @@ data class EventRequest(
  *
  * If the `browser.agent` field is not present, the deserializer returns the node unmodified.
  */
-private class DataDeserializer : JsonDeserializer<JsonNode?>() {
+private class DataDeserializer : JsonDeserializer<Any?>() {
   companion object {
     private val userAgentAnalyzer =
       UserAgentAnalyzer
@@ -67,14 +67,14 @@ private class DataDeserializer : JsonDeserializer<JsonNode?>() {
   override fun deserialize(
     parser: JsonParser,
     ctxt: DeserializationContext,
-  ): JsonNode {
+  ): Any? {
     val node: JsonNode = parser.codec.readTree(parser)
     val browserNode = (node as? ObjectNode)?.get("browser")
     val userAgent =
       (browserNode as? ObjectNode)
-        ?.get("agent")
+        ?.get("user_agent")
         ?.asText()
-        ?.let(userAgentAnalyzer::parse) ?: return node
+        ?.let(userAgentAnalyzer::parse) ?: return parser.codec.treeToValue(node, Any::class.java)
 
     node.set<ObjectNode>(
       "browser",
@@ -100,7 +100,7 @@ private class DataDeserializer : JsonDeserializer<JsonNode?>() {
       },
     )
 
-    return node
+    return parser.codec.treeToValue(node, Any::class.java)
   }
 }
 
