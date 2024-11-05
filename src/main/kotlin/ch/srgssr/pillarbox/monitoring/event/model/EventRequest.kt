@@ -64,6 +64,15 @@ private class DataDeserializer : JsonDeserializer<Any?>() {
         .build()
   }
 
+  fun isHackerOrRobot(userAgent: UserAgent): Boolean =
+    listOf(UserAgent.DEVICE_CLASS, UserAgent.LAYOUT_ENGINE_CLASS, UserAgent.AGENT_CLASS, UserAgent.AGENT_SECURITY)
+      .any { field ->
+        userAgent.getValue(field)?.let { value ->
+          value.startsWith("Hacker", ignoreCase = true) ||
+            value.startsWith("Robot", ignoreCase = true)
+        } ?: false
+      }
+
   override fun deserialize(
     parser: JsonParser,
     ctxt: DeserializationContext,
@@ -79,26 +88,28 @@ private class DataDeserializer : JsonDeserializer<Any?>() {
     node.set<ObjectNode>(
       "browser",
       browserNode.apply {
-        put("name", userAgent.getValueOrNull("AgentName"))
-        put("version", userAgent.getValueOrNull("AgentVersion"))
+        put("name", userAgent.getValueOrNull(UserAgent.AGENT_NAME))
+        put("version", userAgent.getValueOrNull(UserAgent.AGENT_VERSION))
       },
     )
 
     node.set<ObjectNode>(
       "device",
       ObjectNode(ctxt.nodeFactory).apply {
-        put("name", userAgent.getValueOrNull("DeviceName"))
-        put("version", userAgent.getValueOrNull("DeviceVersion"))
+        put("name", userAgent.getValueOrNull(UserAgent.DEVICE_NAME))
+        put("version", userAgent.getValueOrNull(UserAgent.DEVICE_VERSION))
       },
     )
 
     node.set<ObjectNode>(
       "os",
       ObjectNode(ctxt.nodeFactory).apply {
-        put("name", userAgent.getValueOrNull("OperatingSystemName"))
-        put("version", userAgent.getValueOrNull("OperatingSystemVersion"))
+        put("name", userAgent.getValueOrNull(UserAgent.OPERATING_SYSTEM_NAME))
+        put("version", userAgent.getValueOrNull(UserAgent.OPERATING_SYSTEM_VERSION))
       },
     )
+
+    node.put("robot", isHackerOrRobot(userAgent))
 
     return parser.codec.treeToValue(node, Any::class.java)
   }
