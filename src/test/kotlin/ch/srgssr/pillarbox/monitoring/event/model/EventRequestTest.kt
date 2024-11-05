@@ -32,6 +32,7 @@ class EventRequestTest(
 
       // Then: The user agent data should have been resolved
       val dataNode = eventRequest.data as Map<*, *>
+      dataNode["robot"] shouldBe false
 
       val browserNode = dataNode["browser"] as Map<*, *>
       browserNode["name"] shouldBe "Chrome"
@@ -43,6 +44,42 @@ class EventRequestTest(
       val osNode = dataNode["os"] as Map<*, *>
       osNode["name"] shouldBe "Mac OS"
       osNode["version"] shouldBe ">=10.15.7"
+    }
+
+    should("deserialize an event and flag robot agents") {
+      // Given: an input with a user agent
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "START",
+          "timestamp": 1630000000000,
+          "version": 1,
+          "data": {
+            "browser": {
+              "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15 (Applebot/0.1; +http://www.apple.com/go/applebot)"
+            }
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+
+      // Then: The user agent data should have been resolved
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["robot"] shouldBe true
+
+      val browserNode = dataNode["browser"] as Map<*, *>
+      browserNode["name"] shouldBe "Applebot"
+      browserNode["version"] shouldBe "0.1"
+
+      val deviceNode = dataNode["device"] as Map<*, *>
+      deviceNode["name"] shouldBe "Apple BOT"
+
+      val osNode = dataNode["os"] as Map<*, *>
+      osNode["name"] shouldBe "Cloud"
+      osNode["version"] shouldBe null
     }
 
     should("retain existing data when deserializing an event without user agent") {
