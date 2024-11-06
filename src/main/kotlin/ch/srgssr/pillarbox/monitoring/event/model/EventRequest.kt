@@ -96,8 +96,8 @@ private class DataDeserializer : JsonDeserializer<Any?>() {
     node.set<ObjectNode>(
       "device",
       ObjectNode(ctxt.nodeFactory).apply {
-        put("name", userAgent.getValueOrNull(UserAgent.DEVICE_NAME))
-        put("version", userAgent.getValueOrNull(UserAgent.DEVICE_VERSION))
+        put("model", userAgent.getValueOrNull(UserAgent.DEVICE_NAME))
+        put("type", userAgent.getValueOrNull(UserAgent.DEVICE_CLASS))
       },
     )
 
