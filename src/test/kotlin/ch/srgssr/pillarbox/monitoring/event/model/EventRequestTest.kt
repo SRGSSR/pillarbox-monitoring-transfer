@@ -39,7 +39,8 @@ class EventRequestTest(
       browserNode["version"] shouldBe "129"
 
       val deviceNode = dataNode["device"] as Map<*, *>
-      deviceNode["name"] shouldBe "Apple Macintosh"
+      deviceNode["model"] shouldBe "Apple Macintosh"
+      deviceNode["type"] shouldBe "Desktop"
 
       val osNode = dataNode["os"] as Map<*, *>
       osNode["name"] shouldBe "Mac OS"
@@ -75,7 +76,8 @@ class EventRequestTest(
       browserNode["version"] shouldBe "0.1"
 
       val deviceNode = dataNode["device"] as Map<*, *>
-      deviceNode["name"] shouldBe "Apple BOT"
+      deviceNode["model"] shouldBe "Apple BOT"
+      deviceNode["type"] shouldBe "Robot"
 
       val osNode = dataNode["os"] as Map<*, *>
       osNode["name"] shouldBe "Cloud"
