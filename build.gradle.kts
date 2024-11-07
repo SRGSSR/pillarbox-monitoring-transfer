@@ -8,6 +8,7 @@ plugins {
   id("io.spring.dependency-management") version "1.1.6"
   id("io.gitlab.arturbosch.detekt") version "1.23.7"
   id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
+  id("org.jetbrains.kotlinx.kover") version "0.8.3"
 }
 
 group = "ch.srgssr.pillarbox"
@@ -37,6 +38,9 @@ dependencies {
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("io.kotest.extensions:kotest-extensions-spring:1.3.0")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+  testImplementation("io.mockk:mockk:1.13.13")
+  testImplementation("com.squareup.okhttp3:mockwebserver")
+  testImplementation("com.squareup.okhttp3:okhttp")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -80,6 +84,7 @@ tasks.bootJar.configure {
 
 tasks.withType<Test> {
   useJUnitPlatform()
+  finalizedBy("koverXmlReport")
 }
 
 val updateVersion by tasks.registering {
