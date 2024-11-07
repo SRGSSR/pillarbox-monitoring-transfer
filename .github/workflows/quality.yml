@@ -24,6 +24,16 @@ jobs:
       - name: Run Build
         run: ./gradlew build
 
+      - name: Add coverage to PR
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: madrapps/jacoco-report@v1.7.1
+        with:
+          paths: ${{ github.workspace }}/**/build/reports/kover/report.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          update-comment: true
+          min-coverage-changed-files: 0
+          min-coverage-overall: 0
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
