@@ -31,6 +31,7 @@ jobs:
           paths: ${{ github.workspace }}/**/build/reports/kover/report.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           update-comment: true
+          title: Coverage Report
           min-coverage-changed-files: 0
           min-coverage-overall: 0
 
