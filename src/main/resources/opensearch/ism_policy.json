@@ -1,14 +1,34 @@
 {
   "policy": {
-    "description": "Policy for managing actions indices",
+    "description": "Hot warm delete policy for events",
     "default_state": "hot",
+    "schema_version": 1,
     "states": [
       {
         "name": "hot",
         "actions": [
           {
             "rollover": {
-              "min_index_age": "14d"
+              "min_index_age": "1d",
+              "copy_alias": true
+            }
+          }
+        ],
+        "transitions": [
+          {
+            "state_name": "warm",
+            "conditions": {
+              "min_index_age": "7d"
+            }
+          }
+        ]
+      },
+      {
+        "name": "warm",
+        "actions": [
+          {
+            "replica_count": {
+              "number_of_replicas": 0
             }
           }
         ],
@@ -27,14 +47,12 @@
           {
             "delete": {}
           }
-        ],
-        "transitions": []
+        ]
       }
+
     ],
     "ism_template": {
-      "index_patterns": [
-        "actions*"
-      ],
+      "index_patterns": ["events*"],
       "priority": 100
     }
   }

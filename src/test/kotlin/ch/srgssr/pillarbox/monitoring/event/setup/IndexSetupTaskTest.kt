@@ -38,7 +38,7 @@ class IndexSetupTaskTest(
       mockWebServer.dispatcher =
         createDispatcher(
           mapOf(
-            "HEAD" to "/actions-000001" to MockResponse().setResponseCode(200),
+            "HEAD" to "/events" to MockResponse().setResponseCode(200),
           ),
         )
 
@@ -49,7 +49,7 @@ class IndexSetupTaskTest(
       mockWebServer.requestCount shouldBe 1
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/actions-000001"
+        path shouldBe "/events"
         method shouldBe "HEAD"
       }
     }
@@ -59,8 +59,8 @@ class IndexSetupTaskTest(
       mockWebServer.dispatcher =
         createDispatcher(
           mapOf(
-            "HEAD" to "/actions-000001" to MockResponse().setResponseCode(404),
-            "PUT" to "/actions-000001" to MockResponse().setResponseCode(201),
+            "HEAD" to "/events" to MockResponse().setResponseCode(404),
+            "PUT" to "/events-000001" to MockResponse().setResponseCode(201),
           ),
         )
 
@@ -71,12 +71,12 @@ class IndexSetupTaskTest(
       mockWebServer.requestCount shouldBe 2
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/actions-000001"
+        path shouldBe "/events"
         method shouldBe "HEAD"
       }
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/actions-000001"
+        path shouldBe "/events-000001"
         method shouldBe "PUT"
         shouldNotThrow<Exception> { objectMapper.readTree(body.readUtf8()) }
       }

@@ -9,7 +9,6 @@ import org.springframework.core.io.ResourceLoader
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
@@ -25,7 +24,7 @@ import reactor.core.publisher.Mono
  * @property resourceLoader Resource loader used to access the index template JSON file.
  */
 @Component
-@Order(2)
+@Order(3)
 class IndexSetupTask(
   @Qualifier("openSearchWebClient")
   private val webClient: WebClient,
@@ -40,7 +39,12 @@ class IndexSetupTask(
     /**
      * Path for creating the OpenSearch index.
      */
-    private const val INDEX_CREATION_PATH = "/actions-000001"
+    private const val INDEX_CREATION_PATH = "/events-000001"
+
+    /**
+     * Path to check if the index exists.
+     */
+    private const val INDEX_CHECK_PATH = "/events"
   }
 
   /**
@@ -52,10 +56,10 @@ class IndexSetupTask(
    */
   override fun run(): Mono<*> = checkAndCreateIndex()
 
-  private fun checkAndCreateIndex(): Mono<ResponseEntity<Void>> =
+  private fun checkAndCreateIndex(): Mono<*> =
     webClient
       .head()
-      .uri(INDEX_CREATION_PATH)
+      .uri(INDEX_CHECK_PATH)
       .retrieve()
       .onStatus(HttpStatusCode::is4xxClientError) {
         logger.info("Index does not exist, creating index...")
@@ -65,13 +69,13 @@ class IndexSetupTask(
         Mono.empty()
       }.toBodilessEntity()
 
-  private fun createIndex(): Mono<ResponseEntity<Void>> {
-    val indexTemplateJson = resourceLoader.loadResourceContent("classpath:opensearch/index_template.json")
+  private fun createIndex(): Mono<*> {
+    val indexJson = resourceLoader.loadResourceContent("classpath:opensearch/index.json")
     return webClient
       .put()
       .uri(INDEX_CREATION_PATH)
       .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-      .bodyValue(indexTemplateJson)
+      .bodyValue(indexJson)
       .retrieve()
       .toBodilessEntity()
       .doOnSuccess { logger.info("Index created successfully") }
