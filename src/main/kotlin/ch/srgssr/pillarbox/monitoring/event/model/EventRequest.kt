@@ -27,7 +27,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType
  * @property data Additional data associated with the event.
  * @property session Session data associated with the event, potentially updated later.
  */
-@Document(indexName = "actions", createIndex = false)
+@Document(indexName = "events", createIndex = false)
 data class EventRequest(
   @Id
   @JsonIgnore

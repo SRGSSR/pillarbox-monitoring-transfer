@@ -9,7 +9,6 @@ import org.springframework.core.io.ResourceLoader
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
@@ -39,7 +38,7 @@ class ISMPolicySetupTask(
     /**
      * Path for the Index State Management (ISM) policy in OpenSearch.
      */
-    private const val ISM_POLICY_PATH = "/_plugins/_ism/policies/actions_policy"
+    private const val ISM_POLICY_PATH = "/_plugins/_ism/policies/events_policy"
   }
 
   /**
@@ -51,7 +50,7 @@ class ISMPolicySetupTask(
    */
   override fun run(): Mono<*> = checkAndApplyISMPolicy()
 
-  private fun checkAndApplyISMPolicy(): Mono<ResponseEntity<Void>> =
+  private fun checkAndApplyISMPolicy(): Mono<*> =
     webClient
       .get()
       .uri(ISM_POLICY_PATH)
@@ -64,7 +63,7 @@ class ISMPolicySetupTask(
         Mono.empty()
       }.toBodilessEntity()
 
-  private fun applyISMPolicy(): Mono<ResponseEntity<Void>> {
+  private fun applyISMPolicy(): Mono<*> {
     val ismPolicyJson = resourceLoader.loadResourceContent("classpath:opensearch/ism_policy.json")
 
     return webClient

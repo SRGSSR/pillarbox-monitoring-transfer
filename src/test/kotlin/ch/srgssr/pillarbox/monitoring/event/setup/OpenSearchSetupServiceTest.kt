@@ -51,15 +51,16 @@ class OpenSearchSetupServiceTest(
       }
     }
 
-    should("execute tasks in order: create ism policy, create index and create alias") {
+    should("execute tasks in order: create ism policy, create template, create index and create alias") {
       // Given: opensearch is already running and setup
       mockWebServer.dispatcher =
         createDispatcher(
           mapOf(
             "GET" to "/" to MockResponse().setResponseCode(200),
-            "GET" to "/_plugins/_ism/policies/actions_policy" to MockResponse().setResponseCode(200),
-            "HEAD" to "/actions-000001" to MockResponse().setResponseCode(200),
-            "GET" to "/_alias/filtered_actions" to MockResponse().setResponseCode(200),
+            "GET" to "/_plugins/_ism/policies/events_policy" to MockResponse().setResponseCode(200),
+            "GET" to "/_index_template/events_template" to MockResponse().setResponseCode(200),
+            "HEAD" to "/events" to MockResponse().setResponseCode(200),
+            "GET" to "/_alias/user_events" to MockResponse().setResponseCode(200),
           ),
         )
 
@@ -67,7 +68,7 @@ class OpenSearchSetupServiceTest(
       openSearchSetupService.start().block()
 
       // Then: Tasks should have been executed in order
-      mockWebServer.requestCount shouldBe 4
+      mockWebServer.requestCount shouldBe 5
 
       mockWebServer.takeRequest().apply {
         path shouldBe "/"
@@ -75,17 +76,22 @@ class OpenSearchSetupServiceTest(
       }
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/_plugins/_ism/policies/actions_policy"
+        path shouldBe "/_plugins/_ism/policies/events_policy"
         method shouldBe "GET"
       }
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/actions-000001"
+        path shouldBe "/_index_template/events_template"
+        method shouldBe "GET"
+      }
+
+      mockWebServer.takeRequest().apply {
+        path shouldBe "/events"
         method shouldBe "HEAD"
       }
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/_alias/filtered_actions"
+        path shouldBe "/_alias/user_events"
         method shouldBe "GET"
       }
     }

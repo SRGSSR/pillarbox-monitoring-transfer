@@ -16,8 +16,8 @@ import org.springframework.test.context.ContextConfiguration
 @SpringBootTest
 @ContextConfiguration(classes = [PillarboxMonitoringTestConfiguration::class])
 @ActiveProfiles("test")
-class AliasSetupTaskTest(
-  private val aliasSetupTask: AliasSetupTask,
+class IndexTemplateSetupTaskTest(
+  private val indexTemplateSetupTask: IndexTemplateSetupTask,
   private val openSearchProperties: OpenSearchConfigurationProperties,
   private val objectMapper: ObjectMapper,
 ) : ShouldSpec({
@@ -33,50 +33,50 @@ class AliasSetupTaskTest(
       mockWebServer.shutdown()
     }
 
-    should("skip creation if alias exists") {
-      // Given: The alias is already created in opensearch
+    should("skip creation if index template exists") {
+      // Given: The index template is already created in opensearch
       mockWebServer.dispatcher =
         createDispatcher(
           mapOf(
-            "GET" to "/_alias/user_events" to MockResponse().setResponseCode(200),
+            "GET" to "/_index_template/events_template" to MockResponse().setResponseCode(200),
           ),
         )
 
-      // When: The alias setup task is run
-      aliasSetupTask.run().block()
+      // When: The index template setup task is run
+      indexTemplateSetupTask.run().block()
 
-      // Then: The alias creation endpoint shouldn't have been invoked
+      // Then: The index template creation endpoint shouldn't have been invoked
       mockWebServer.requestCount shouldBe 1
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/_alias/user_events"
+        path shouldBe "/_index_template/events_template"
         method shouldBe "GET"
       }
     }
 
-    should("not skip creation if alias doesn't exists") {
-      // Given: The alias is already created in opensearch
+    should("not skip creation if index template doesn't exists") {
+      // Given: The index template is not created in opensearch
       mockWebServer.dispatcher =
         createDispatcher(
           mapOf(
-            "GET" to "/_alias/user_events" to MockResponse().setResponseCode(404),
-            "PUT" to "/_aliases/user_events" to MockResponse().setResponseCode(201),
+            "GET" to "/_index_template/events_template" to MockResponse().setResponseCode(404),
+            "PUT" to "/_index_template/events_template" to MockResponse().setResponseCode(201),
           ),
         )
 
-      // When: The alias setup task is run
-      aliasSetupTask.run().block()
+      // When: The index template setup task is run
+      indexTemplateSetupTask.run().block()
 
-      // Then: The alias creation endpoint should have been invoked
+      // Then: The index template creation endpoint should have been invoked
       mockWebServer.requestCount shouldBe 2
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/_alias/user_events"
+        path shouldBe "/_index_template/events_template"
         method shouldBe "GET"
       }
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/_aliases/user_events"
+        path shouldBe "/_index_template/events_template"
         method shouldBe "PUT"
         shouldNotThrow<Exception> { objectMapper.readTree(body.readUtf8()) }
       }

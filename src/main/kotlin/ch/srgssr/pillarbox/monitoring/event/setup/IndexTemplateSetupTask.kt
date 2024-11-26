@@ -14,17 +14,16 @@ import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 
 /**
- * Task responsible for setting up a filtered alias in OpenSearch.
+ * Task responsible for setting up the OpenSearch index template.
  *
- * This task checks if the specified alias exists in OpenSearch. If it does not, it loads the alias
- * configuration from `resources/opensearch/alias.json` and creates it.
+ * This task creates the index template stored in `resources/opensearch/index_template.json`.
  *
  * @property webClient WebClient instance used to interact with the OpenSearch API.
- * @property resourceLoader Resource loader used to access the alias configuration JSON file.
+ * @property resourceLoader Resource loader used to access the index template JSON file.
  */
 @Component
-@Order(4)
-class AliasSetupTask(
+@Order(2)
+class IndexTemplateSetupTask(
   @Qualifier("openSearchWebClient")
   private val webClient: WebClient,
   private val resourceLoader: ResourceLoader,
@@ -36,53 +35,43 @@ class AliasSetupTask(
     private val logger = logger()
 
     /**
-     * Name of the filtered alias.
+     * Path for creating the index template.
      */
-    private const val ALIAS_NAME = "user_events"
-
-    /**
-     * Path to check for the existence of the alias in OpenSearch.
-     */
-    private const val ALIAS_CHECK_PATH = "/_alias/${ALIAS_NAME}"
-
-    /**
-     * Path to create the alias in OpenSearch.
-     */
-    private const val ALIAS_CREATION_PATH = "/_aliases/${ALIAS_NAME}"
+    private const val INDEX_TEMPLATE_CREATION_PATH = "/_index_template/events_template"
   }
 
   /**
-   * Runs the alias setup task.
+   * Runs the index template setup task.
    *
-   * Checks if the alias exists: If not, creates the alias.
+   * Checks if the index template exists: if not, creates the index template.
    *
    * @return Mono indicating the completion of the task.
    */
-  override fun run(): Mono<*> = checkAndCreateAlias()
+  override fun run(): Mono<*> = checkAndCreateTemplate()
 
-  private fun checkAndCreateAlias(): Mono<*> =
+  private fun checkAndCreateTemplate(): Mono<*> =
     webClient
       .get()
-      .uri(ALIAS_CHECK_PATH)
+      .uri(INDEX_TEMPLATE_CREATION_PATH)
       .retrieve()
       .onStatus(HttpStatusCode::is4xxClientError) {
-        logger.info("Alias '$ALIAS_NAME' does not exist, creating alias...")
-        createAlias().then(Mono.empty())
+        logger.info("Index template does not exist, creating it...")
+        createTemplate().then(Mono.empty())
       }.onStatus(HttpStatusCode::is2xxSuccessful) {
-        logger.info("Alias '$ALIAS_NAME' already exists, skipping creation.")
+        logger.info("Index template already exists, skipping creation.")
         Mono.empty()
       }.toBodilessEntity()
 
-  private fun createAlias(): Mono<*> {
-    val indexTemplateJson = resourceLoader.loadResourceContent("classpath:opensearch/alias.json")
+  private fun createTemplate(): Mono<*> {
+    val indexTemplateJson = resourceLoader.loadResourceContent("classpath:opensearch/index_template.json")
     return webClient
       .put()
-      .uri(ALIAS_CREATION_PATH)
+      .uri(INDEX_TEMPLATE_CREATION_PATH)
       .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
       .bodyValue(indexTemplateJson)
       .retrieve()
       .toBodilessEntity()
-      .doOnSuccess { logger.info("Alias ${ALIAS_NAME} created successfully") }
-      .doOnError { e -> logger.error { "Failed to create alias: ${e.message}" } }
+      .doOnSuccess { logger.info("Index template created successfully") }
+      .doOnError { e -> logger.error { "Failed to create index template: ${e.message}" } }
   }
 }

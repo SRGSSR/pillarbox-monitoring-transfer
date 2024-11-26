@@ -3,7 +3,6 @@ package ch.srgssr.pillarbox.monitoring.event.setup
 import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
 import ch.srgssr.pillarbox.monitoring.log.logger
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Flux
@@ -52,7 +51,7 @@ class OpenSearchSetupService(
       .then(runSetupTasks())
       .doOnSuccess { logger.info("All setup tasks are completed, starting SSE client...") }
 
-  private fun checkOpenSearchHealth(): Mono<ResponseEntity<Void>> =
+  private fun checkOpenSearchHealth(): Mono<*> =
     webClient
       .get()
       .uri("/")

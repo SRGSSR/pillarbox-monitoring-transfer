@@ -38,7 +38,7 @@ class ISMPolicySetupTaskTest(
       mockWebServer.dispatcher =
         createDispatcher(
           mapOf(
-            "GET" to "/_plugins/_ism/policies/actions_policy" to MockResponse().setResponseCode(200),
+            "GET" to "/_plugins/_ism/policies/events_policy" to MockResponse().setResponseCode(200),
           ),
         )
 
@@ -49,7 +49,7 @@ class ISMPolicySetupTaskTest(
       mockWebServer.requestCount shouldBe 1
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/_plugins/_ism/policies/actions_policy"
+        path shouldBe "/_plugins/_ism/policies/events_policy"
         method shouldBe "GET"
       }
     }
@@ -59,8 +59,8 @@ class ISMPolicySetupTaskTest(
       mockWebServer.dispatcher =
         createDispatcher(
           mapOf(
-            "GET" to "/_plugins/_ism/policies/actions_policy" to MockResponse().setResponseCode(404),
-            "PUT" to "/_plugins/_ism/policies/actions_policy" to MockResponse().setResponseCode(201),
+            "GET" to "/_plugins/_ism/policies/events_policy" to MockResponse().setResponseCode(404),
+            "PUT" to "/_plugins/_ism/policies/events_policy" to MockResponse().setResponseCode(201),
           ),
         )
 
@@ -71,12 +71,12 @@ class ISMPolicySetupTaskTest(
       mockWebServer.requestCount shouldBe 2
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/_plugins/_ism/policies/actions_policy"
+        path shouldBe "/_plugins/_ism/policies/events_policy"
         method shouldBe "GET"
       }
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/_plugins/_ism/policies/actions_policy"
+        path shouldBe "/_plugins/_ism/policies/events_policy"
         method shouldBe "PUT"
         shouldNotThrow<Exception> { objectMapper.readTree(body.readUtf8()) }
       }

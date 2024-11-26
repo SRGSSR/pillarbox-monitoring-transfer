@@ -1,18 +1,19 @@
 {
-  "settings": {
-    "number_of_shards": 1
-  },
-  "mappings": {
-    "properties": {
-      "@timestamp": {
-        "type": "date",
-        "format": "epoch_millis"
+  "index_patterns": ["events*"],
+  "priority": 100,
+  "template": {
+    "settings": {
+      "number_of_shards": 3,
+      "number_of_replicas": 1,
+      "plugins.index_state_management.rollover_alias": "events"
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date",
+          "format": "epoch_millis"
+        }
       }
-    }
-  },
-  "aliases": {
-    "actions": {
-      "is_write_index": true
     }
   }
 }
