@@ -48,7 +48,7 @@ class AliasSetupTask(
     /**
      * Path to create the alias in OpenSearch.
      */
-    private const val ALIAS_CREATION_PATH = "/_aliases/${ALIAS_NAME}"
+    private const val ALIAS_CREATION_PATH = "/_aliases"
   }
 
   /**
@@ -76,7 +76,7 @@ class AliasSetupTask(
   private fun createAlias(): Mono<*> {
     val indexTemplateJson = resourceLoader.loadResourceContent("classpath:opensearch/alias.json")
     return webClient
-      .put()
+      .post()
       .uri(ALIAS_CREATION_PATH)
       .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
       .bodyValue(indexTemplateJson)

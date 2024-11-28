@@ -60,7 +60,7 @@ class AliasSetupTaskTest(
         createDispatcher(
           mapOf(
             "GET" to "/_alias/user_events" to MockResponse().setResponseCode(404),
-            "PUT" to "/_aliases/user_events" to MockResponse().setResponseCode(201),
+            "POST" to "/_aliases" to MockResponse().setResponseCode(201),
           ),
         )
 
@@ -76,8 +76,8 @@ class AliasSetupTaskTest(
       }
 
       mockWebServer.takeRequest().apply {
-        path shouldBe "/_aliases/user_events"
-        method shouldBe "PUT"
+        path shouldBe "/_aliases"
+        method shouldBe "POST"
         shouldNotThrow<Exception> { objectMapper.readTree(body.readUtf8()) }
       }
     }
