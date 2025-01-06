@@ -1,6 +1,6 @@
 package ch.srgssr.pillarbox.monitoring.event.repository
 
-import ch.srgssr.pillarbox.monitoring.common.RetryProperties
+import ch.srgssr.pillarbox.monitoring.event.config.RetryProperties
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
 import java.net.URI

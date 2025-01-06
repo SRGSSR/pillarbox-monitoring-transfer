@@ -1,31 +1,39 @@
 package ch.srgssr.pillarbox.monitoring.event
 
-import ch.srgssr.pillarbox.monitoring.concurrent.LockManager
-import ch.srgssr.pillarbox.monitoring.event.config.SseClientConfigurationProperties
+import ch.srgssr.pillarbox.monitoring.benchmark.StatsTracker
+import ch.srgssr.pillarbox.monitoring.benchmark.timed
+import ch.srgssr.pillarbox.monitoring.cache.LRUCache
 import ch.srgssr.pillarbox.monitoring.event.model.EventRequest
-import ch.srgssr.pillarbox.monitoring.exception.RetryExhaustedException
+import ch.srgssr.pillarbox.monitoring.event.repository.EventRepository
+import ch.srgssr.pillarbox.monitoring.flow.chunked
+import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
+import ch.srgssr.pillarbox.monitoring.log.trace
+import ch.srgssr.pillarbox.monitoring.opensearch.saveAllSuspend
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.retryWhen
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.bodyToFlux
+import org.springframework.web.reactive.function.client.bodyToFlow
 
 /**
  * Service responsible for managing a Server-Sent Events (SSE) connection to the event dispatcher service.
  * It handles incoming events, and manages retry behavior in case of connection failures.
  *
- * @property eventService The service used to handle incoming events.
+ * @property eventRepository The repository where the events are stored.
  * @property properties The SSE client configuration containing the URI and retry settings.
- * @property lockManager The session based lock manager.
  */
 @Service
 class EventDispatcherClient(
-  private val eventService: EventService,
-  private val properties: SseClientConfigurationProperties,
-  private val lockManager: LockManager,
+  private val eventRepository: EventRepository,
+  private val properties: EventDispatcherClientConfiguration,
 ) {
   private companion object {
     /**
@@ -34,50 +42,63 @@ class EventDispatcherClient(
     private val logger = logger()
   }
 
-  /**
+  private val sessionCache: LRUCache<String, Any> = LRUCache(properties.cacheSize)
+
+  /**a
    * Starts the SSE client, connecting to the configured SSE endpoint. It handles incoming events by
    * delegating to the appropriate event handling methods and manages retries in case of connection failures.
    */
-  fun start() =
+  fun start(): Job =
     WebClient
       .create(properties.uri)
       .get()
       .retrieve()
-      .bodyToFlux<EventRequest>()
+      .bodyToFlow<EventRequest>()
       .retryWhen(
-        properties.retry
-          .create()
-          .doBeforeRetry {
-            logger.warn("Retrying SSE connection...")
-          }.onRetryExhaustedThrow { _, retrySignal ->
-            RetryExhaustedException(
-              "Retries exhausted after ${retrySignal.totalRetries()} attempts",
-              retrySignal.failure(),
+        properties.sseRetry.toRetryWhen(
+          onRetry = { cause, attempt, delayMillis ->
+            logger.warn(
+              "Retrying after failure: ${cause.message}. " +
+                "Attempt ${attempt + 1}. Waiting for ${delayMillis}ms",
             )
           },
-      ).doOnNext { CoroutineScope(Dispatchers.IO).launch { handleEvent(it) } }
-      .doOnError { error ->
-        if (error !is RetryExhaustedException) {
-          logger.error("An error occurred while processing the event.", error)
-        }
-      }
+        ),
+      ).onEach { StatsTracker.increment("incomingEvents") }
+      .buffer(
+        capacity = properties.bufferCapacity,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+      ).chunked(properties.saveChunkSize)
+      .onEach { logger.info { "Start processing next ${it.size} events" } }
+      .map { events ->
+        StatsTracker.increment("nonDroppedEvents", events.size)
 
-  private suspend fun handleEvent(eventRequest: EventRequest) {
-    lockManager[eventRequest.sessionId].withLock {
-      when (eventRequest.eventName) {
-        "START" -> handleStartEvent(eventRequest)
-        else -> handleNonStartEvent(eventRequest)
+        val startEvents =
+          events
+            .filter { it.eventName == "START" }
+            .onEach { sessionCache.put(it.sessionId, it.data) }
+
+        val nonStartEvents =
+          events
+            .filter { it.eventName != "START" }
+            .onEach { it.session = sessionCache.get(it.sessionId) }
+            .filter { it.session != null }
+            .also { StatsTracker.increment("cacheHits", it.size) }
+
+        startEvents + nonStartEvents
+      }.onEach { logger.info { "Adding ${it.size} events to next save batch" } }
+      .onEach { this.saveEvents(it) }
+      .launchIn(CoroutineScope(Dispatchers.Default))
+
+  @Suppress("TooGenericExceptionCaught")
+  private suspend fun saveEvents(events: List<EventRequest>) {
+    try {
+      logger.trace { "Saving events $events" }
+
+      timed("EventRepository.saveEvents") {
+        eventRepository.saveAllSuspend(events)
       }
+    } catch (e: Exception) {
+      logger.error("An error occurred while saving the current batch", e)
     }
-  }
-
-  private suspend fun handleStartEvent(eventRequest: EventRequest) {
-    eventService.updateSessionData(eventRequest)
-    eventService.saveEvent(eventRequest)
-  }
-
-  private suspend fun handleNonStartEvent(eventRequest: EventRequest) {
-    eventRequest.session = eventService.findSession(eventRequest.sessionId)?.data
-    eventService.saveEvent(eventRequest)
   }
 }

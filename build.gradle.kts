@@ -4,11 +4,12 @@ import java.util.Properties
 plugins {
   kotlin("jvm") version "2.0.10"
   kotlin("plugin.spring") version "2.0.10"
-  id("org.springframework.boot") version "3.3.4"
-  id("io.spring.dependency-management") version "1.1.6"
+  id("org.springframework.boot") version "3.4.1"
+  id("io.spring.dependency-management") version "1.1.7"
   id("io.gitlab.arturbosch.detekt") version "1.23.7"
-  id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
-  id("org.jetbrains.kotlinx.kover") version "0.8.3"
+  id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
+  id("org.jetbrains.kotlinx.kover") version "0.9.0"
+  id("com.github.ben-manes.versions") version "0.51.0"
 }
 
 group = "ch.srgssr.pillarbox"
@@ -24,23 +25,23 @@ repositories {
 }
 
 dependencies {
-  implementation("org.springframework.boot:spring-boot-starter-aop")
-  implementation("org.springframework.boot:spring-boot-starter-actuator")
-  implementation("org.opensearch.client:spring-data-opensearch-starter:1.5.3")
+  // Dependencies
+  implementation("org.opensearch.client:spring-data-opensearch-starter:1.6.0")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
+  implementation("nl.basjes.parse.useragent:yauaa:7.29.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-  implementation("com.github.ben-manes.caffeine:caffeine")
-  implementation("nl.basjes.parse.useragent:yauaa:7.28.1")
+
+  // Test Dependencies
   testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("io.kotest.extensions:kotest-extensions-spring:1.3.0")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
   testImplementation("io.mockk:mockk:1.13.13")
-  testImplementation("com.squareup.okhttp3:mockwebserver")
-  testImplementation("com.squareup.okhttp3:okhttp")
+  testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+  testImplementation("com.squareup.okhttp3:okhttp:4.12.0")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

@@ -4,12 +4,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.runApplication
+import org.springframework.scheduling.annotation.EnableScheduling
 
 /**
  * Main entry point for the Pillarbox QoS Data Transfer application.
  */
 @SpringBootApplication(exclude = [ElasticsearchDataAutoConfiguration::class])
 @ConfigurationPropertiesScan
+@EnableScheduling
 class PillarboxDataTransferApplication
 
 /**

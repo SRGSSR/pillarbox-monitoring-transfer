@@ -15,6 +15,7 @@ import org.springframework.data.elasticsearch.annotations.DateFormat
 import org.springframework.data.elasticsearch.annotations.Document
 import org.springframework.data.elasticsearch.annotations.Field
 import org.springframework.data.elasticsearch.annotations.FieldType
+import org.springframework.data.elasticsearch.annotations.WriteTypeHint
 
 /**
  * Represents an event request stored in the OpenSearch `actions` index.
@@ -27,7 +28,12 @@ import org.springframework.data.elasticsearch.annotations.FieldType
  * @property data Additional data associated with the event.
  * @property session Session data associated with the event, potentially updated later.
  */
-@Document(indexName = "events", createIndex = false)
+@Document(
+  indexName = "events",
+  createIndex = false,
+  writeTypeHint = WriteTypeHint.FALSE,
+  storeIdInSource = false,
+)
 data class EventRequest(
   @Id
   @JsonIgnore

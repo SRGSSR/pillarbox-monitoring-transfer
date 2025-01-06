@@ -2,11 +2,13 @@ package ch.srgssr.pillarbox.monitoring
 
 import ch.srgssr.pillarbox.monitoring.event.EventDispatcherClient
 import ch.srgssr.pillarbox.monitoring.event.setup.OpenSearchSetupService
-import ch.srgssr.pillarbox.monitoring.exception.RetryExhaustedException
 import ch.srgssr.pillarbox.monitoring.log.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.runBlocking
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.annotation.Profile
@@ -43,33 +45,22 @@ class DataTransferApplicationRunner(
    *
    * @param args Application arguments.
    */
-  override fun run(args: ApplicationArguments?) {
-    openSearchSetupService.start().subscribe(
-      // Success
-      { this.startSseClient() },
-      // Error
-      {
-        logger.error("Failed to connect to OpenSearch:", it)
-        CoroutineScope(Dispatchers.IO).launch {
-          terminationService.terminateApplication()
-        }
-      },
-    )
-  }
+  override fun run(args: ApplicationArguments?) =
+    runBlocking {
+      try {
+        openSearchSetupService
+          .start()
+          .asFlow()
+          .catch {
+            logger.error("Failed to connect to OpenSearch:", it)
+            throw it
+          }.launchIn(CoroutineScope(Dispatchers.Default))
+          .join()
 
-  private fun startSseClient() {
-    eventDispatcherClient.start().subscribe(
-      // Success
-      { },
-      // Error
-      {
-        if (it is RetryExhaustedException) {
-          logger.error("Failed to connect to SSE after retries, terminating application.", it)
-          CoroutineScope(Dispatchers.IO).launch {
-            terminationService.terminateApplication()
-          }
-        }
-      },
-    )
-  }
+        logger.info("All setup tasks are completed, starting SSE client...")
+        eventDispatcherClient.start().join()
+      } finally {
+        terminationService.terminateApplication()
+      }
+    }
 }

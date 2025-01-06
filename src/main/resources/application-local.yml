@@ -1,0 +1,4 @@
+pillarbox.monitoring.dispatch:
+  buffer-capacity: 1_000
+  cache-size: 5_000
+  save-chunk-size: 1
