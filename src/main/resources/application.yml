@@ -1,23 +1,10 @@
 spring:
+  main.web-application-type: none
   threads.virtual.enabled: true
   application.name: pillarbox-monitoring-transfer
   jackson.deserialization:
-      fail-on-null-for-primitives: true
-
+    fail-on-null-for-primitives: true
 
 pillarbox.monitoring:
   dispatch.uri: "http://localhost:8080/events"
   opensearch.uri: "http://localhost:9200"
-
-server:
-  port: 8081
-  http2.enabled: true
-  compression.enabled: true
-
-management:
-  endpoints.web.exposure.include: health
-  endpoint.health.show-details: always
-  health.benchmark.enabled: true
-
-logging.level:
-  ch.srgssr.pillarbox.monitoring: INFO

@@ -6,6 +6,7 @@ import org.opensearch.data.client.orhlc.ClientConfiguration
 import org.opensearch.data.client.orhlc.RestClients
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.time.Duration
 
 /**
  * Configuration class for setting up the OpenSearch client.
@@ -34,6 +35,7 @@ class OpenSearchConfiguration(
         .apply {
           if (properties.isHttps) {
             usingSsl()
+            withSocketTimeout(Duration.ofSeconds(10))
           }
         }.build()
 

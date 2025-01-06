@@ -61,9 +61,6 @@ Alternatively, you can build and run the application using Docker:
 This project is a Kotlin-based Spring Boot application designed to connect to a Server-Sent Events (
 SSE) endpoint, process incoming events, and store data in an OpenSearch index.
 
-It leverages Spring Boot's reactive WebFlux framework and integrates custom health indicators using
-Spring Boot Actuator to provide insights into application performance.
-
 ### System Flow Overview
 
 The main loop of this service is illustrated in the following diagram:
@@ -72,7 +69,6 @@ The main loop of this service is illustrated in the following diagram:
 sequenceDiagram
   participant DataTransfer
   participant SSEEndpoint
-  participant LockManager
   participant OpenSearch
   DataTransfer ->> OpenSearch: Initialize index
   DataTransfer ->> SSEEndpoint: Connects and listens to events
@@ -80,7 +76,6 @@ sequenceDiagram
     SSEEndpoint --) DataTransfer: Send Event
     DataTransfer ->> LockManager: Acquire session lock
     DataTransfer ->> OpenSearch: Store event
-    DataTransfer -->> LockManager: Release session lock
   end
 ```
 
@@ -91,14 +86,10 @@ system:
 
 - [PillarboxDataTransferApplication.kt][main-entry-point]: The main entry point of the application
   that bootstraps and configures the service.
-- [BenchmarkHealthIndicator.kt][health-indicator]: Monitors the performance of key operations,
-  providing real-time health metrics for the application.
-- [LockManager.kt][lock-manager]: Ensures concurrency control by managing locks for different
-  sessions, enabling thread-safe operations.
-- [SetupService.kt][setup-service]: Manages the initial setup of the OpenSearch index and the
-  application’s configuration for SSE processing.
-- [SseClient.kt][sse-client]: Listens to the SSE endpoint, handling incoming events and managing
-  retries in case of connection failures.
+- [OpenSearchSetupService.kt][setup-service]: Manages the initial setup of the OpenSearch index and
+  the application’s configuration for SSE processing.
+- [EventDispatcherClient.kt][sse-client]: Listens to the SSE endpoint, handling incoming events and
+  managing retries in case of connection failures.
 
 Here’s a more concise description of the GitHub Actions setup without listing the steps:
 
@@ -162,11 +153,6 @@ Refer to our [Contribution Guide](docs/CONTRIBUTING.md) for more detailed inform
 This project is licensed under the [MIT License](LICENSE).
 
 [main-entry-point]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/PillarboxDataTransferApplication.kt
+[setup-service]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/setup/OpenSearchSetupService.kt
+[sse-client]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/EventDispatcherClient.kt
 
-[health-indicator]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/health/BenchmarkHealthIndicator.kt
-
-[lock-manager]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/concurrent/LockManager.kt
-
-[setup-service]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/SetupService.kt
-
-[sse-client]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/SseClient.kt

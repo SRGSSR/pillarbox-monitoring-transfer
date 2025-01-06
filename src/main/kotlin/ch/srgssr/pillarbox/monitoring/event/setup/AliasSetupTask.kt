@@ -2,6 +2,7 @@ package ch.srgssr.pillarbox.monitoring.event.setup
 
 import ch.srgssr.pillarbox.monitoring.io.loadResourceContent
 import ch.srgssr.pillarbox.monitoring.log.error
+import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.annotation.Order
@@ -66,10 +67,10 @@ class AliasSetupTask(
       .uri(ALIAS_CHECK_PATH)
       .retrieve()
       .onStatus(HttpStatusCode::is4xxClientError) {
-        logger.info("Alias '$ALIAS_NAME' does not exist, creating alias...")
+        logger.info { "Alias '$ALIAS_NAME' does not exist, creating alias..." }
         createAlias().then(Mono.empty())
       }.onStatus(HttpStatusCode::is2xxSuccessful) {
-        logger.info("Alias '$ALIAS_NAME' already exists, skipping creation.")
+        logger.info { "Alias '$ALIAS_NAME' already exists, skipping creation." }
         Mono.empty()
       }.toBodilessEntity()
 
@@ -82,7 +83,7 @@ class AliasSetupTask(
       .bodyValue(indexTemplateJson)
       .retrieve()
       .toBodilessEntity()
-      .doOnSuccess { logger.info("Alias ${ALIAS_NAME} created successfully") }
+      .doOnSuccess { logger.info { "Alias ${ALIAS_NAME} created successfully" } }
       .doOnError { e -> logger.error { "Failed to create alias: ${e.message}" } }
   }
 }

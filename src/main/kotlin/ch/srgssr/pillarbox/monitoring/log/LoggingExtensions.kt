@@ -11,7 +11,14 @@ import org.slf4j.LoggerFactory
 inline fun <reified T> T.logger(): Logger = LoggerFactory.getLogger(T::class.java)
 
 /**
- * Logs a debug message if the debug letvel is enabled for the logger.
+ * Logs a trace message if the trace level is enabled for the logger.
+ *
+ * @param lazyMessage A lambda function that generates the log message only if trace logging is enabled.
+ */
+inline fun Logger.trace(lazyMessage: () -> String) = isTraceEnabled.takeIf { it }?.let { trace(lazyMessage()) }
+
+/**
+ * Logs a debug message if the debug level is enabled for the logger.
  *
  * @param lazyMessage A lambda function that generates the log message only if debug logging is enabled.
  */

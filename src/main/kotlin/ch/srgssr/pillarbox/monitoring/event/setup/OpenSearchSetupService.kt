@@ -1,6 +1,7 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
 import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
+import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
@@ -41,7 +42,7 @@ class OpenSearchSetupService(
    * the retry settings defined in [properties]. If retries are exhausted, the
    * application will be terminated.
    */
-  fun start() =
+  fun start(): Mono<*> =
     checkOpenSearchHealth()
       .retryWhen(
         properties.retry.create().doBeforeRetry {
@@ -49,7 +50,6 @@ class OpenSearchSetupService(
         },
       ).doOnSuccess { logger.info("OpenSearch is healthy, proceeding with setup...") }
       .then(runSetupTasks())
-      .doOnSuccess { logger.info("All setup tasks are completed, starting SSE client...") }
 
   private fun checkOpenSearchHealth(): Mono<*> =
     webClient
@@ -62,7 +62,7 @@ class OpenSearchSetupService(
     Flux
       .fromIterable(tasks)
       .concatMap { task ->
-        logger.info("Running setup task: ${task::class.simpleName}")
+        logger.info { "Running setup task: ${task::class.simpleName}" }
         task.run()
       }.last()
 }
