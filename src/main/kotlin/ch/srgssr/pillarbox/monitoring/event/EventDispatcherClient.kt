@@ -34,6 +34,7 @@ import org.springframework.web.reactive.function.client.bodyToFlow
 class EventDispatcherClient(
   private val eventRepository: EventRepository,
   private val properties: EventDispatcherClientConfiguration,
+  webClientBuilder: WebClient.Builder,
 ) {
   private companion object {
     /**
@@ -43,14 +44,14 @@ class EventDispatcherClient(
   }
 
   private val sessionCache: LRUCache<String, Any> = LRUCache(properties.cacheSize)
+  private val webClient = webClientBuilder.baseUrl(properties.uri).build()
 
   /**a
    * Starts the SSE client, connecting to the configured SSE endpoint. It handles incoming events by
    * delegating to the appropriate event handling methods and manages retries in case of connection failures.
    */
   fun start(): Job =
-    WebClient
-      .create(properties.uri)
+    webClient
       .get()
       .retrieve()
       .bodyToFlow<EventRequest>()

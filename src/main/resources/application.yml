@@ -4,7 +4,3 @@ spring:
   application.name: pillarbox-monitoring-transfer
   jackson.deserialization:
     fail-on-null-for-primitives: true
-
-pillarbox.monitoring:
-  dispatch.uri: "http://localhost:8080/events"
-  opensearch.uri: "http://localhost:9200"
