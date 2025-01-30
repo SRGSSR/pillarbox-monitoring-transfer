@@ -114,6 +114,13 @@
               "type": "keyword",
               "ignore_above": 256
             },
+            "error_type": {
+              "type": "keyword",
+              "ignore_above": 256
+            },
+            "business_error": {
+              "type": "boolean"
+            },
             "name": {
               "type": "keyword",
               "ignore_above": 256
