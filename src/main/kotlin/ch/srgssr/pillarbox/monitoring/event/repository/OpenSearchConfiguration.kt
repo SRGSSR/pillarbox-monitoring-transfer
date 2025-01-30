@@ -6,6 +6,7 @@ import org.opensearch.data.client.orhlc.ClientConfiguration
 import org.opensearch.data.client.orhlc.RestClients
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.data.elasticsearch.core.convert.ElasticsearchCustomConversions
 import java.time.Duration
 
 /**
@@ -35,10 +36,23 @@ class OpenSearchConfiguration(
         .apply {
           if (properties.isHttps) {
             usingSsl()
-            withSocketTimeout(Duration.ofSeconds(10))
+            withSocketTimeout(Duration.ofMillis(properties.timeout))
           }
         }.build()
 
     return RestClients.create(clientConfiguration).rest()
   }
+
+  /**
+   * Registers custom conversions for OpenSearch.
+   *
+   * @return An instance of [ElasticsearchCustomConversions] containing the custom converters.
+   *
+   * @see [ClampingLongConverter]
+   */
+  @Bean
+  override fun elasticsearchCustomConversions(): ElasticsearchCustomConversions =
+    ElasticsearchCustomConversions(
+      listOf(ClampingLongConverter()),
+    )
 }

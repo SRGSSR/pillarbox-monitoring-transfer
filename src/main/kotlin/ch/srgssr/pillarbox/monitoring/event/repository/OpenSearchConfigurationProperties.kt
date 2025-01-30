@@ -12,12 +12,14 @@ import java.net.URI
  *
  * @property uri The URI of the OpenSearch server. Defaults to `http://localhost:9200`.
  * @property retry Nested configuration properties for retry settings related to OpenSearch operations.
+ * @property timeout The default timeout for each connection in milliseconds. 10s by default.
  */
 @ConfigurationProperties(prefix = "pillarbox.monitoring.opensearch")
 data class OpenSearchConfigurationProperties(
   val uri: URI = URI("http://localhost:9200"),
   @NestedConfigurationProperty
   val retry: RetryProperties = RetryProperties(),
+  val timeout: Long = 10_000,
 ) {
   /**
    * Retrieves the host and port in the format `host:port` based on the URI.
