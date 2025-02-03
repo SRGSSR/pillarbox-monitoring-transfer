@@ -44,6 +44,8 @@ internal enum class ContentRestriction(
   AGERATING12(
     listOf(
       "To protect children this content is only available between 8PM and 6AM.",
+      "To protect children, this content is only available between 8PM and 6AM.",
+      "Aus Gründen des Jugendschutzes steht dieser Inhalt nur zwischen 20:00 und 06:00 Uhr zur Verfügung.",
       "Pour protéger les enfants, ce contenu est accessible entre 20h et 6h.",
       "Per proteggere i bambini, questo media è disponibile solo fra le 20 e le 6.",
       "Per proteger uffants, è quest cuntegn disponibel mo tranter las 20.00 e las 06.00.",
@@ -52,6 +54,8 @@ internal enum class ContentRestriction(
   AGERATING18(
     listOf(
       "To protect children this content is only available between 10PM and 5AM.",
+      "To protect children, this content is only available between 11PM and 5AM.",
+      "Aus Gründen des Jugendschutzes steht dieser Inhalt nur zwischen 23:00 und 05:00 Uhr zur Verfügung.",
       "Pour protéger les enfants, ce contenu est accessible entre 23h et 5h.",
       "Per proteggere i bambini, questo media è disponibile solo fra le 23 le 5.",
       "Per proteger uffants, è quest cuntegn disponibel mo tranter las 23.00 e las 05.00.",
@@ -60,6 +64,8 @@ internal enum class ContentRestriction(
   COMMERCIAL(
     listOf(
       "This commercial content is not available.",
+      "This commercial media is not available.",
+      "Die Werbung wurde übersprungen.",
       "Ce contenu n'est actuellement pas disponible.",
       "Questo contenuto commerciale non è disponibile.",
       "Quest medium commerzial n'è betg disponibel.",
@@ -68,6 +74,7 @@ internal enum class ContentRestriction(
   ENDDATE(
     listOf(
       "This content is not available anymore.",
+      "Dieser Inhalt ist nicht mehr verfügbar.",
       "Ce contenu n'est plus disponible.",
       "Questo media non è più disponibile.",
       "Quest cuntegn n'è betg pli disponibel.",
@@ -76,6 +83,7 @@ internal enum class ContentRestriction(
   GEOBLOCK(
     listOf(
       "This content is not available outside Switzerland.",
+      "Dieser Inhalt ist ausserhalb der Schweiz nicht verfügbar.",
       "La RTS ne dispose pas des droits de diffusion en dehors de la Suisse.",
       "Questo media non è disponibile fuori dalla Svizzera.",
       "Quest cuntegn n'è betg disponibel ordaifer la Svizra.",
@@ -84,6 +92,7 @@ internal enum class ContentRestriction(
   JOURNALISTIC(
     listOf(
       "This content is temporarily unavailable for journalistic reasons.",
+      "Dieser Inhalt steht aus publizistischen Gründen vorübergehend nicht zur Verfügung.",
       "Ce contenu est temporairement indisponible pour des raisons éditoriales.",
       "Questo contenuto è temporaneamente non disponibile per motivi editoriali.",
       "Quest cuntegn na stat ad interim betg a disposiziun per motivs publicistics.",
@@ -92,6 +101,7 @@ internal enum class ContentRestriction(
   LEGAL(
     listOf(
       "This content is not available due to legal restrictions.",
+      "Dieser Inhalt ist aus rechtlichen Gründen nicht verfügbar.",
       "Pour des raisons juridiques, ce contenu n'est pas disponible.",
       "Il contenuto non è fruibile a causa di restrizioni legali.",
       "Quest cuntegn n'è betg disponibel perquai ch'el è scadì.",
@@ -100,6 +110,8 @@ internal enum class ContentRestriction(
   STARTDATE(
     listOf(
       "This content is not available yet.",
+      "This content is not yet available. Please try again later.",
+      "Dieser Inhalt ist noch nicht verfügbar. Bitte probieren Sie es später noch einmal.",
       "Ce contenu n'est pas encore disponible. Veuillez réessayer plus tard.",
       "Il contenuto non è ancora disponibile. Per cortesia prova più tardi.",
       "Quest cuntegn n'è betg anc disponibel. Empruvai pli tard.",
@@ -108,6 +120,7 @@ internal enum class ContentRestriction(
   UNKNOWN(
     listOf(
       "This content is not available.",
+      "Dieser Inhalt ist nicht verfügbar.",
       "Ce contenu n'est actuellement pas disponible.",
       "Questo media non è disponibile.",
       "Quest cuntegn n'è betg disponibel.",
