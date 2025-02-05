@@ -111,6 +111,7 @@ internal enum class ContentRestriction(
     listOf(
       "This content is not available yet.",
       "This content is not yet available. Please try again later.",
+      "Dieser Inhalt ist noch nicht verfügbar.",
       "Dieser Inhalt ist noch nicht verfügbar. Bitte probieren Sie es später noch einmal.",
       "Ce contenu n'est pas encore disponible. Veuillez réessayer plus tard.",
       "Il contenuto non è ancora disponibile. Per cortesia prova più tardi.",
