@@ -133,7 +133,10 @@ internal enum class ContentRestriction(
     private val messageToTypeMap: Map<String, ContentRestriction> by lazy {
       entries
         .flatMap { type ->
-          type.messages.map { message -> message to type }
+          buildList {
+            addAll(type.messages.map { message -> message to type })
+            add(Pair(type.name, type))
+          }
         }.toMap()
     }
 
