@@ -86,8 +86,7 @@
               "type": "long"
             },
             "log": {
-              "type": "keyword",
-              "ignore_above": 256
+              "type": "text"
             },
             "media": {
               "properties": {
