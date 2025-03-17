@@ -77,6 +77,10 @@ class EventDispatcherClient(
           events
             .filter { it.eventName == "START" }
             .onEach { sessionCache.put(it.sessionId, it.data) }
+            .onEach {
+              it.session = it.data
+              it.data = emptyMap<String, Any>()
+            }
 
         val nonStartEvents =
           events
