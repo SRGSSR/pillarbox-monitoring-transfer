@@ -7,7 +7,6 @@
         "filter": {
           "bool": {
             "must_not": [
-              { "term": { "data.robot": true } },
               { "term": { "session.robot": true } }
             ]
           }
