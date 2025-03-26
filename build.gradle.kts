@@ -96,7 +96,7 @@ val updateVersion by tasks.registering {
 
     propertiesFile.inputStream().use { properties.load(it) }
 
-    if (properties.get("version") != version) {
+    if (properties["version"] != version) {
       properties.setProperty("version", version)
       propertiesFile.outputStream().use { properties.store(it, null) }
 
