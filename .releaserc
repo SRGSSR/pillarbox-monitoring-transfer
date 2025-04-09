@@ -1,5 +1,7 @@
 {
-  "branches": ["main"],
+  "branches": [
+    "main"
+  ],
   "plugins": [
     "@semantic-release/commit-analyzer",
     [
@@ -80,7 +82,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "./gradlew clean release -Pversion=${nextRelease.version}",
+        "prepareCmd": "./gradlew clean release -Pversion=${nextRelease.version} && echo ${nextRelease.version} > osctl/.version && zip -r osctl.zip osctl",
         "successCmd": "echo ${nextRelease.version} > VERSION"
       }
     ],
@@ -98,6 +100,10 @@
           {
             "path": "README.md",
             "label": "Readme"
+          },
+          {
+            "path": "osctl.zip",
+            "label": "OpenSearch CLI Tools"
           }
         ]
       }

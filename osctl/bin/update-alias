@@ -1,0 +1,70 @@
+#!/bin/bash
+
+unset OPENSEARCH_HOST
+unset ALIAS_JSON
+source "$(dirname "$0")/../lib/logging.sh"
+
+# Usage function
+usage() {
+  warn "Usage: $0 -h <opensearch_host> -t <alias_json>"
+  echo ""
+  echo "This script updates the 'user_events' alias in OpenSearch."
+  echo ""
+  echo "Options:"
+  echo "  -h <opensearch_host>   The OpenSearch host URL (e.g., http://localhost:9200)"
+  echo "  -t <alias_json>        The JSON payload for the alias configuration"
+  echo ""
+  echo "Example:"
+  echo "  $0 -h http://localhost:9200 -t '{ ... }'"  echo ""
+  exit 1
+}
+
+# Parse arguments
+while getopts "h:t:" opt; do
+  case ${opt} in
+    h ) OPENSEARCH_HOST=$OPTARG ;;
+    t ) ALIAS_JSON=$OPTARG ;;
+    * ) usage ;;
+  esac
+done
+
+# Check if required arguments are set
+if [ -z "$OPENSEARCH_HOST" ] || [ -z "$ALIAS_JSON" ]; then
+  error "Error: OpenSearch host and alias JSON are required."
+  usage
+fi
+
+info "Deleting existing alias..."
+DELETE_RESPONSE=$(curl -s -X DELETE "$OPENSEARCH_HOST/events*/_alias/user_events")
+CURL_EXIT_CODE=$?
+
+# Check if curl failed
+if [ $CURL_EXIT_CODE -ne 0 ]; then
+  error "Error: Unable to communicate with OpenSearch. Please check your connection."
+  exit 1
+fi
+
+if echo "$DELETE_RESPONSE" | grep -q 'error'; then
+  error "Error: Failed to delete existing alias. Response: $DELETE_RESPONSE"
+  exit 1
+else
+  success "Existing alias deleted successfully."
+fi
+
+
+info "Recreating alias with the provided configuration..."
+CREATE_RESPONSE=$(curl -s -X POST "$OPENSEARCH_HOST/_aliases" -H 'Content-Type: application/json' -d "$ALIAS_JSON")
+CURL_EXIT_CODE=$?
+
+# Check if curl failed
+if [ $CURL_EXIT_CODE -ne 0 ]; then
+  error "Error: Unable to communicate with OpenSearch. Please check your connection."
+  exit 1
+fi
+
+if echo "$CREATE_RESPONSE" | grep -q 'error'; then
+  error "Error: Failed to create alias. Response: $CREATE_RESPONSE"
+  exit 1
+else
+  success "Alias updated successfully."
+fi
