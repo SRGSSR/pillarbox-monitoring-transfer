@@ -22,7 +22,7 @@ print_version() {
   if [ -f ".version" ]; then
     echo "osctl version: $(cat .version)"
   else
-    error "Error: VERSION.txt file not found."
+    error "Error: .version file not found."
     exit 1
   fi
 }
