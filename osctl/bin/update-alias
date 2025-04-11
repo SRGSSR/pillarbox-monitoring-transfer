@@ -15,7 +15,8 @@ usage() {
   echo "  -t <alias_json>        The JSON payload for the alias configuration"
   echo ""
   echo "Example:"
-  echo "  $0 -h http://localhost:9200 -t '{ ... }'"  echo ""
+  echo "  $0 -h http://localhost:9200 -t '{ ... }'"
+  echo ""
   exit 1
 }
 
