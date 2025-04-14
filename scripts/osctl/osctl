@@ -10,7 +10,6 @@ usage() {
   echo "  update-template    Update the OpenSearch index template"
   echo "  update-alias       Update the OpenSearch alias"
   echo "  force-rollover     Force rollover of the 'events' index"
-  echo "  update             Update osctl tools to a specific version"
   echo ""
   echo "Example:"
   echo "  $0 update-alias -h http://localhost:9200 -t '{\"actions\":...}'"
@@ -43,11 +42,10 @@ COMMAND=$1
 shift  # Shift removes the first argument so the rest can be passed to the sub-script
 
 # Define script paths
-SCRIPT_DIR="$(dirname "$0")/bin"  # Gets the directory of this script
-UPDATE_TEMPLATE_SCRIPT="$SCRIPT_DIR/update-index-template"
-UPDATE_ALIAS_SCRIPT="$SCRIPT_DIR/update-alias"
-FORCE_ROLLOVER_SCRIPT="$SCRIPT_DIR/force-rollover"
-UPDATE_OSCTL_SCRIPT="$SCRIPT_DIR/update-osctl"
+BIN_DIR="$(dirname "$0")/bin"  # Gets the directory of this script
+UPDATE_TEMPLATE_SCRIPT="$BIN_DIR/update-index-template"
+UPDATE_ALIAS_SCRIPT="$BIN_DIR/update-alias"
+FORCE_ROLLOVER_SCRIPT="$BIN_DIR/force-rollover"
 
 # Redirect to the appropriate script
 case "$COMMAND" in
@@ -59,9 +57,6 @@ case "$COMMAND" in
     ;;
   force-rollover)
     exec "$FORCE_ROLLOVER_SCRIPT" "$@"
-    ;;
-  update)
-    exec "$UPDATE_OSCTL_SCRIPT" "$@"
     ;;
   *)
     error "Error: Invalid command '$COMMAND'"
