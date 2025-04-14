@@ -82,7 +82,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "./gradlew clean release -Pversion=${nextRelease.version} && echo ${nextRelease.version} > osctl/.version && zip -r osctl.zip osctl",
+        "prepareCmd": "./gradlew clean release -Pversion=${nextRelease.version} && echo ${nextRelease.version} > scripts/osctl/.version && (cd scripts/osctl && zip -r ../../osctl.zip .)",
         "successCmd": "echo ${nextRelease.version} > VERSION"
       }
     ],
