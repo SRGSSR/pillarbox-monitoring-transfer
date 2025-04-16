@@ -30,7 +30,7 @@ install script. The `install-osctl.sh` script will:
    Download the [`install-osctl.sh`](./install-osctl.sh) script from the repo:
 
    ```bash
-   wget https://raw.githubusercontent.com/SRGSSR/pillarbox-monitoring-transfer/scripts/install-osctl.sh
+   wget https://raw.githubusercontent.com/SRGSSR/pillarbox-monitoring-transfer/refs/heads/main/scripts/install-osctl.sh
    chmod +x install-osctl.sh
    ```
 
