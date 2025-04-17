@@ -1,9 +1,7 @@
 package ch.srgssr.pillarbox.monitoring.event.model
 
-import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import org.springframework.boot.test.context.SpringBootTest
@@ -11,70 +9,9 @@ import org.springframework.test.context.ActiveProfiles
 
 @SpringBootTest
 @ActiveProfiles("test")
-class EventRequestTest(
+class UserAgentProcessorTest(
   private val objectMapper: ObjectMapper,
 ) : ShouldSpec({
-    should("deserialize successfully if all required fields are present") {
-      // Given: an event as json
-      val jsonInput =
-        """
-        {
-          "session_id": "12345",
-          "event_name": "START",
-          "timestamp": 1630000000000,
-          "user_ip": "127.0.0.1",
-          "version": 1,
-          "data": { }
-          }
-        }
-        """.trimIndent()
-
-      // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
-
-      // Then: The data of the event should be correctly parsed.
-      eventRequest.sessionId shouldBe "12345"
-      eventRequest.eventName shouldBe "START"
-      eventRequest.timestamp shouldBe 1630000000000
-      eventRequest.ip shouldBe "127.0.0.1"
-      eventRequest.version shouldBe 1
-    }
-
-    context("fail to deserialize if missing any required field") {
-      val baseJson =
-        mapOf(
-          "session_id" to "\"12345\"",
-          "event_name" to "\"START\"",
-          "timestamp" to "1630000000000",
-          "version" to "1",
-          "data" to "{}",
-        )
-
-      baseJson.keys.forEach { missingField ->
-        should("fail if $missingField is missing") {
-          val jsonInput =
-            baseJson
-              .filterKeys { it != missingField } // Exclude the current field
-              .map { (key, value) -> "\"$key\": $value" }
-              .joinToString(prefix = "{", postfix = "}")
-
-          shouldThrow<JsonMappingException> {
-            objectMapper.readValue<EventRequest>(jsonInput)
-          }
-        }
-        should("fail if $missingField is null") {
-          val jsonInput =
-            baseJson
-              .map { (key, value) ->
-                "\"$key\": ${if (key == missingField) "null" else value}"
-              }.joinToString(prefix = "{", postfix = "}")
-
-          shouldThrow<JsonMappingException> {
-            objectMapper.readValue<EventRequest>(jsonInput)
-          }
-        }
-      }
-    }
 
     should("deserialize an event and resolve user agent") {
       // Given: an input with a user agent
