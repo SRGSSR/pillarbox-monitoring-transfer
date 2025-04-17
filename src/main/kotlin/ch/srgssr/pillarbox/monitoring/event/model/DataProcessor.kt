@@ -22,8 +22,12 @@ internal interface DataProcessor {
    * Implementations can override this method to specify which event types they should handle.
    *
    * @param eventName The name of the event being processed.
+   * @param data The processed data so far.
    *
    * @return `true` if the processor should handle this event, `false` otherwise.
    */
-  fun shouldProcess(eventName: String): Boolean = true
+  fun shouldProcess(
+    eventName: String,
+    data: Map<String, Any?>,
+  ): Boolean = true
 }
