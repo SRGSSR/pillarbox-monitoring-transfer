@@ -32,7 +32,10 @@ internal class UserAgentProcessor : DataProcessor {
   /**
    * Process only on START events.
    */
-  override fun shouldProcess(eventName: String): Boolean = eventName == "START"
+  override fun shouldProcess(
+    eventName: String,
+    data: Map<String, Any?>,
+  ): Boolean = eventName == "START"
 
   /**
    * Processes the given data node to extract and enrich user agent details.

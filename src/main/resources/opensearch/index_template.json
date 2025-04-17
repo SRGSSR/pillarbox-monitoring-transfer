@@ -64,6 +64,10 @@
               "type": "keyword",
               "ignore_above": 256
             },
+            "block_reason": {
+              "type": "keyword",
+              "ignore_above": 256
+            },
             "business_error": {
               "type": "boolean"
             },
