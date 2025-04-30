@@ -36,6 +36,30 @@ class ErrorProcessorTest(
       dataNode["error_type"] shouldBe "DRM_NOT_SUPPORTED"
     }
 
+    should("classify an error as unknown if no pattern matches") {
+      // Given: an input with a predefined error message
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "ERROR",
+          "timestamp": 1630000000000,
+          "user_ip": "127.0.0.1",
+          "version": 1,
+          "data": {
+            "log": "ERROR: Unexpected error occurred."
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+
+      // Then: The error should be classified correctly
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["error_type"] shouldBe "UNKNOWN_ERROR"
+    }
+
     should("not classify errors if it's already flagged as a business error") {
       // Given: an input with a non predefined error message
       val jsonInput =
