@@ -121,6 +121,19 @@ internal enum class ContentRestriction(
       "Quest cuntegn n'è betg anc disponibel. Empruvai pli tard.",
     ),
   ),
+  VPNORPROXYDETECTED(
+    listOf(
+      "This content cannot be played while using a VPN.",
+      "This content cannot be played while using a VPN or a proxy.",
+      "Dieser Inhalt ist mit VPN oder Proxy nicht abspielbar.",
+      "Dieser Inhalt ist mit aktiviertem VPN nicht abspielbar.",
+      "Ce contenu ne peut pas être lu avec un VPN ou un proxy.",
+      "Ce contenu ne peut pas être lu lorsque vous utilisez un VPN.",
+      "Questo contenuto non può essere riprodotto con VPN o proxy.",
+      "Questo contenuto non può essere riprodotto mentre si utilizza una VPN.",
+      "Quest cuntegn na po betg vegnir reproducì cun VPN ni proxy activà.",
+    ),
+  ),
   UNKNOWN(
     listOf(
       "This content is not available.",
@@ -138,7 +151,7 @@ internal enum class ContentRestriction(
         .flatMap { type ->
           buildList {
             addAll(type.messages.map { message -> message to type })
-            add(Pair(type.name, type))
+            add(type.name to type)
           }
         }.toMap()
     }
