@@ -74,10 +74,19 @@ sequenceDiagram
   DataTransfer ->> SSEEndpoint: Connects and listens to events
   loop Listen for events
     SSEEndpoint --) DataTransfer: Send Event
-    DataTransfer ->> LockManager: Acquire session lock
     DataTransfer ->> OpenSearch: Store event
   end
 ```
+
+### Session consolidation
+
+Full session data is available on the `START` event, in order to attach it to subsequent events we
+keep a fixed size in-memory [LRU Cache][lru-cache], events are resolved as follows:
+
+- START events carrying the complete session payload is processed, we store that payload under
+  its session ID and strip it out of the event, so downstream batches stay small.
+- Non-START events look up their session ID in the cache and inherit the stored payload; any event
+  whose session isn’t found is dropped.
 
 ### Key Components
 
@@ -90,6 +99,8 @@ system:
   the application’s configuration for SSE processing.
 - [EventDispatcherClient.kt][sse-client]: Listens to the SSE endpoint, handling incoming events and
   managing retries in case of connection failures.
+- [EventRequestDataConverter.kt][data-converter]: Enriches and transforms incoming events using
+  registered data processors (e.g. user-agent resolution, error classification, etc.).
 
 Here’s a more concise description of the GitHub Actions setup without listing the steps:
 
@@ -153,6 +164,12 @@ Refer to our [Contribution Guide](docs/CONTRIBUTING.md) for more detailed inform
 This project is licensed under the [MIT License](LICENSE).
 
 [main-entry-point]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/PillarboxDataTransferApplication.kt
+
 [setup-service]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/setup/OpenSearchSetupService.kt
+
 [sse-client]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/EventDispatcherClient.kt
+
+[lru-cache]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/cache/LRUCache.kt
+
+[data-converter]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/model/EventRequestDataConverter.kt
 
