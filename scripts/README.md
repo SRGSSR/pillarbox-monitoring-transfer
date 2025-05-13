@@ -124,13 +124,13 @@ osctl update-alias -h http://localhost:9200 -t '{...}'
 osctl force-rollover -h http://localhost:9200
 ```
 
-#### Update ISM Policy
+#### Update ISM Policy:
 
 ```bash
 osctl auto-update-ism-policy -h http://localhost:9200 -d '{...}'
 ```
 
-## Guidelines for Updating the index template
+## Guidelines for updating the index template
 
 When you update an index template in OpenSearch, changes are only applied to new indices. Existing
 indices will continue using the old configuration. Depending on your use case, you can choose
@@ -173,7 +173,7 @@ updating the alias to target it.
 Recommended for: Situations where changes must be applied without waiting for the scheduled
 rollover.
 
-## Guidelines for Updating the ISM Policy
+## Guidelines for updating the ISM Policy
 
 To update the `events_policy` ISM policy in OpenSearch, you need the current `seq_no` and
 `primary_term`. This ensures that the update is performed safely and correctly.
