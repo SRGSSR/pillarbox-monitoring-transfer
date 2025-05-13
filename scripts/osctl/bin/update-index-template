@@ -2,6 +2,7 @@
 
 unset OPENSEARCH_HOST
 unset TEMPLATE_JSON
+
 source "$(dirname "$0")/../lib/logging.sh"
 
 # Usage function

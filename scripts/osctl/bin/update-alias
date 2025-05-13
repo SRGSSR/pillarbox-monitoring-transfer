@@ -2,6 +2,7 @@
 
 unset OPENSEARCH_HOST
 unset ALIAS_JSON
+
 source "$(dirname "$0")/../lib/logging.sh"
 
 # Usage function
@@ -63,9 +64,9 @@ if [ $CURL_EXIT_CODE -ne 0 ]; then
   exit 1
 fi
 
-if echo "$CREATE_RESPONSE" | grep -q 'error'; then
+if echo "$CREATE_RESPONSE" | grep -q '"acknowledged":true'; then
+  success "Alias updated successfully."
+else
   error "Error: Failed to create alias. Response: $CREATE_RESPONSE"
   exit 1
-else
-  success "Alias updated successfully."
 fi
