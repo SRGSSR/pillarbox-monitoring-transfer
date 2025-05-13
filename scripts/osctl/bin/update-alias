@@ -70,3 +70,4 @@ else
   error "Error: Failed to create alias. Response: $CREATE_RESPONSE"
   exit 1
 fi
+
