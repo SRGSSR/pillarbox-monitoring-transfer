@@ -8,7 +8,7 @@ source "$(dirname "$0")/../lib/logging.sh"
 usage() {
   warn "Usage: $0 -h <opensearch_host>"
   echo ""
-  echo "This script forces an immediate rollover of the 'events' index in OpenSearch."
+  echo "This script retrieves the seq_no and primary_term for the 'events_policy' ISM policy."
   echo ""
   echo "Options:"
   echo "  -h <opensearch_host>   The OpenSearch host URL (e.g., http://localhost:9200)"
@@ -16,7 +16,6 @@ usage() {
   echo "Example:"
   echo "  $0 -h http://localhost:9200"
   echo ""
-  echo "This script is part of the monitoring setup and is used to force a rollover of the 'events' index, ensuring a new index is created."
   exit 1
 }
 
@@ -24,7 +23,7 @@ usage() {
 while getopts "h:" opt; do
   case ${opt} in
     h ) OPENSEARCH_HOST=$OPTARG ;;
-    * ) ;;
+    * ) usage ;;
   esac
 done
 
@@ -34,15 +33,9 @@ if [ -z "$OPENSEARCH_HOST" ]; then
   usage
 fi
 
+info "Retrieving seq_no and primary_term for policy 'events_policy'..."
 
-info "Forcing rollover..."
-ROLLOVER_RESPONSE=$(curl -s -X POST "$OPENSEARCH_HOST/events/_rollover" \
-  -H "Content-Type: application/json" \
-  -d '{
-        "conditions": {
-          "max_age": "0s"
-        }
-      }')
+GET_RESPONSE=$(curl -s -X GET "$OPENSEARCH_HOST/_plugins/_ism/policies/events_policy")
 CURL_EXIT_CODE=$?
 
 # Check if curl failed
@@ -51,11 +44,15 @@ if [ $CURL_EXIT_CODE -ne 0 ]; then
   exit 1
 fi
 
-# Check if rollover was successful
-if echo "$ROLLOVER_RESPONSE" | grep -q '"acknowledged":true'; then
-  success "Rollover completed successfully!"
-else
-  error "Error: Rollover failed. Response: $ROLLOVER_RESPONSE"
+SEQ_NO=$(echo "$GET_RESPONSE" | jq -r '._seq_no')
+PRIMARY_TERM=$(echo "$GET_RESPONSE" | jq -r '._primary_term')
+
+if [ "$SEQ_NO" == "null" ] || [ "$PRIMARY_TERM" == "null" ]; then
+  error "Error: Could not extract seq_no and primary_term. Response: $GET_RESPONSE"
   exit 1
 fi
 
+success "Retrieved successfully:"
+
+echo "seq_no=$SEQ_NO"
+echo "primary_term=$PRIMARY_TERM"

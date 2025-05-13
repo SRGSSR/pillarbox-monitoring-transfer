@@ -7,9 +7,10 @@ usage() {
   warn "Usage: $0 <command> [options]"
   echo ""
   echo "Commands:"
-  echo "  update-template    Update the OpenSearch index template"
-  echo "  update-alias       Update the OpenSearch alias"
   echo "  force-rollover     Force rollover of the 'events' index"
+  echo "  update-alias       Update the OpenSearch alias"
+  echo "  update-template    Update the OpenSearch index template"
+  echo "  update-ism-policy  Update the ISM policy"
   echo ""
   echo "Example:"
   echo "  $0 update-alias -h http://localhost:9200 -t '{\"actions\":...}'"
@@ -43,20 +44,32 @@ shift  # Shift removes the first argument so the rest can be passed to the sub-s
 
 # Define script paths
 BIN_DIR="$(dirname "$0")/bin"  # Gets the directory of this script
-UPDATE_TEMPLATE_SCRIPT="$BIN_DIR/update-index-template"
-UPDATE_ALIAS_SCRIPT="$BIN_DIR/update-alias"
+AUTO_UPDATE_ISM_POLICY="$BIN_DIR/auto-update-ism-policy"
 FORCE_ROLLOVER_SCRIPT="$BIN_DIR/force-rollover"
+GET_ISM_SEQ="$BIN_DIR/get-ism-seq"
+UPDATE_ALIAS_SCRIPT="$BIN_DIR/update-alias"
+UPDATE_TEMPLATE_SCRIPT="$BIN_DIR/update-index-template"
+UPDATE_ISM_POLICY="$BIN_DIR/update-ism-policy"
 
 # Redirect to the appropriate script
 case "$COMMAND" in
-  update-template)
-    exec "$UPDATE_TEMPLATE_SCRIPT" "$@"
+  auto-update-ism-policy)
+    exec "$AUTO_UPDATE_ISM_POLICY" "$@"
+    ;;
+  force-rollover)
+    exec "$FORCE_ROLLOVER_SCRIPT" "$@"
+    ;;
+  get-ism-seq)
+    exec "$GET_ISM_SEQ" "$@"
     ;;
   update-alias)
     exec "$UPDATE_ALIAS_SCRIPT" "$@"
     ;;
-  force-rollover)
-    exec "$FORCE_ROLLOVER_SCRIPT" "$@"
+  update-template)
+    exec "$UPDATE_TEMPLATE_SCRIPT" "$@"
+    ;;
+  update-ism-policy)
+    exec "$UPDATE_ISM_POLICY" "$@"
     ;;
   *)
     error "Error: Invalid command '$COMMAND'"

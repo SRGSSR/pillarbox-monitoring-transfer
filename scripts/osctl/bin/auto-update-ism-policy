@@ -1,0 +1,55 @@
+#!/bin/bash
+
+unset OPENSEARCH_HOST
+unset POLICY_JSON
+
+source "$(dirname "$0")/../lib/logging.sh"
+
+# Usage function
+usage() {
+  warn "Usage: $0 -h <opensearch_host> -d <policy_json>"
+  echo ""
+  echo "This script automatically retrieves seq_no and primary_term, then updates the 'events_policy' ISM policy in OpenSearch."
+  echo ""
+  echo "Options:"
+  echo "  -h <opensearch_host>   The OpenSearch host URL (e.g., http://localhost:9200)"
+  echo "  -d <policy_json>       The JSON payload for the policy update"
+  echo ""
+  echo "Example:"
+  echo "  $0 -h http://localhost:9200 -d '{ ... }'"
+  echo ""
+  exit 1
+}
+
+# Parse arguments
+while getopts "h:d:" opt; do
+  case ${opt} in
+    h ) OPENSEARCH_HOST=$OPTARG ;;
+    d ) POLICY_JSON=$OPTARG ;;
+    * ) usage ;;
+  esac
+done
+
+# Check if required arguments are set
+if [ -z "$OPENSEARCH_HOST" ] || [ -z "$POLICY_JSON" ]; then
+  error "Error: All parameters are required."
+  usage
+fi
+
+SEQ_TERM_OUTPUT=$(
+  "$(dirname "$0")/get-ism-seq" -h "$OPENSEARCH_HOST" \
+    2>&1 | tee /dev/tty
+)
+SEQ_EXIT_CODE=$?
+
+# If the seq/primary term retrieval fails, exit the script
+if [[ SEQ_EXIT_CODE -ne 0 ]]; then
+  exit 1
+fi
+
+# Extract the seq_no and primary_term from the output of the first script
+SEQ_NO=$(echo "$SEQ_TERM_OUTPUT" | grep 'seq_no=' | cut -d '=' -f2)
+PRIMARY_TERM=$(echo "$SEQ_TERM_OUTPUT" | grep 'primary_term=' | cut -d '=' -f2)
+
+# Call the second script to update the policy, passing the retrieved values
+"$(dirname "$0")/update-ism-policy" -h "$OPENSEARCH_HOST" -d "$POLICY_JSON" -s "$SEQ_NO" -r "$PRIMARY_TERM"

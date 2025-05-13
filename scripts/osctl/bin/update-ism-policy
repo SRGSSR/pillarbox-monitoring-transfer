@@ -1,0 +1,64 @@
+#!/bin/bash
+
+unset OPENSEARCH_HOST
+unset POLICY_JSON
+unset SEQ_NO
+unset PRIMARY_TERM
+
+source "$(dirname "$0")/../lib/logging.sh"
+
+# Usage function
+usage() {
+  warn "Usage: $0 -h <opensearch_host> -d <policy_json> -s <seq_no> -r <primary_term>"
+  echo ""
+  echo "This script updates the 'events_policy' ISM policy in OpenSearch."
+  echo ""
+  echo "Options:"
+  echo "  -h <opensearch_host>   The OpenSearch host URL (e.g., http://localhost:9200)"
+  echo "  -d <policy_json>       The JSON payload for the policy"
+  echo "  -s <seq_no>            The sequence number (seq_no) of the existing policy"
+  echo "  -r <primary_term>      The primary term (primary_term) of the existing policy"
+  echo ""
+  echo "Example:"
+  echo "  $0 -h http://localhost:9200 -d '{ ... }' -s 3 -r 1"
+  echo ""
+  exit 1
+}
+
+# Parse arguments
+while getopts "h:d:s:r:" opt; do
+  case ${opt} in
+    h ) OPENSEARCH_HOST=$OPTARG ;;
+    d ) POLICY_JSON=$OPTARG ;;
+    s ) SEQ_NO=$OPTARG ;;
+    r ) PRIMARY_TERM=$OPTARG ;;
+    * ) usage ;;
+  esac
+done
+
+# Check if required arguments are set
+if [ -z "$OPENSEARCH_HOST" ] || [ -z "$POLICY_JSON" ] || [ -z "$SEQ_NO" ] || [ -z "$PRIMARY_TERM" ]; then
+  error "Error: All parameters are required."
+  usage
+fi
+
+info "Updating ISM policy 'events_policy'..."
+
+UPDATE_URL="$OPENSEARCH_HOST/_plugins/_ism/policies/events_policy?if_seq_no=$SEQ_NO&if_primary_term=$PRIMARY_TERM"
+UPDATE_RESPONSE=$(curl -s -X PUT "$UPDATE_URL" -H 'Content-Type: application/json' -d "$POLICY_JSON")
+CURL_EXIT_CODE=$?
+
+# Check if curl failed
+if [ $CURL_EXIT_CODE -ne 0 ]; then
+  error "Error: Unable to communicate with OpenSearch. Please check your connection."
+  exit 1
+fi
+
+
+# Check if template update was successful
+if echo "$RESPONSE" | grep -q '"error":{'; then
+  error "Error: Failed to update ISM policy. Response: $UPDATE_RESPONSE"
+  exit 1
+else
+  success "ISM policy updated successfully."
+fi
