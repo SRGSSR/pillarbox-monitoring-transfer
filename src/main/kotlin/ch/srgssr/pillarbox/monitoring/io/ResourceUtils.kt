@@ -6,7 +6,7 @@ import java.io.IOException
 /**
  * Retrieves the contents of a specified resource file as a String.
  *
- * @param location The path to the resource (e.g., "classpath:opensearch/index_template.json").
+ * @param location The path to the resource (e.g., "classpath:opensearch/core_events-template.json").
  * @return A String containing the full contents of the resource file.
  *
  * @throws java.io.IOException if there was a problem retrieving the resource.

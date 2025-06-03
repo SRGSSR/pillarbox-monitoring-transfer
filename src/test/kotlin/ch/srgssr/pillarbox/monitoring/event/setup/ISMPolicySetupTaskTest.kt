@@ -6,10 +6,12 @@ import ch.srgssr.pillarbox.monitoring.test.createDispatcher
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 
@@ -20,9 +22,20 @@ class ISMPolicySetupTaskTest(
   private val ismPolicySetupTask: ISMPolicySetupTask,
   private val openSearchProperties: OpenSearchConfigurationProperties,
   private val objectMapper: ObjectMapper,
+  private val resourceLoader: ResourcePatternResolver,
 ) : ShouldSpec({
 
     var mockWebServer = MockWebServer()
+    val policyNames = mutableListOf<String>()
+
+    beforeSpec {
+      policyNames +=
+        resourceLoader
+          .getResources("classpath:opensearch/*-policy.json")
+          .mapNotNull { "${it.filename?.removeSuffix("-policy.json")}_policy" }
+
+      policyNames.size shouldBeGreaterThan 0
+    }
 
     beforeTest {
       mockWebServer = MockWebServer()
@@ -37,20 +50,20 @@ class ISMPolicySetupTaskTest(
       // Given: The ISM policy is already created in opensearch
       mockWebServer.dispatcher =
         createDispatcher(
-          mapOf(
-            "GET" to "/_plugins/_ism/policies/events_policy" to MockResponse().setResponseCode(200),
-          ),
+          policyNames.associate { "GET" to "/_plugins/_ism/policies/$it" to MockResponse().setResponseCode(200) },
         )
 
       // When: The ISM policy setup task is run
-      ismPolicySetupTask.run().block()
+      ismPolicySetupTask.run()
 
       // Then: The ISM policy creation endpoint shouldn't have been invoked
-      mockWebServer.requestCount shouldBe 1
+      mockWebServer.requestCount shouldBe policyNames.size
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_plugins/_ism/policies/events_policy"
-        method shouldBe "GET"
+      policyNames.forEach {
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_plugins/_ism/policies/$it"
+          method shouldBe "GET"
+        }
       }
     }
 
@@ -58,27 +71,31 @@ class ISMPolicySetupTaskTest(
       // Given: The ISM policy is not created in opensearch
       mockWebServer.dispatcher =
         createDispatcher(
-          mapOf(
-            "GET" to "/_plugins/_ism/policies/events_policy" to MockResponse().setResponseCode(404),
-            "PUT" to "/_plugins/_ism/policies/events_policy" to MockResponse().setResponseCode(201),
-          ),
+          buildMap {
+            policyNames.forEach {
+              put("GET" to "/_plugins/_ism/policies/$it", MockResponse().setResponseCode(404))
+              put("PUT" to "/_plugins/_ism/policies/$it", MockResponse().setResponseCode(201))
+            }
+          },
         )
 
       // When: The ISM policy setup task is run
-      ismPolicySetupTask.run().block()
+      ismPolicySetupTask.run()
 
       // Then: The ISM policy creation endpoint should have been invoked
-      mockWebServer.requestCount shouldBe 2
+      mockWebServer.requestCount shouldBe (policyNames.size * 2)
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_plugins/_ism/policies/events_policy"
-        method shouldBe "GET"
-      }
+      policyNames.forEach {
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_plugins/_ism/policies/$it"
+          method shouldBe "GET"
+        }
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_plugins/_ism/policies/events_policy"
-        method shouldBe "PUT"
-        shouldNotThrow<Exception> { objectMapper.readTree(body.readUtf8()) }
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_plugins/_ism/policies/$it"
+          method shouldBe "PUT"
+          shouldNotThrow<Exception> { objectMapper.readTree(body.readUtf8()) }
+        }
       }
     }
   })

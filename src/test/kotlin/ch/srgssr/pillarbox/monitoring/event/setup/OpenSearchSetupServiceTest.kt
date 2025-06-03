@@ -9,6 +9,7 @@ import io.kotest.matchers.shouldBe
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 
@@ -18,8 +19,26 @@ import org.springframework.test.context.ContextConfiguration
 class OpenSearchSetupServiceTest(
   private val openSearchSetupService: OpenSearchSetupService,
   private val openSearchProperties: OpenSearchConfigurationProperties,
+  private val resourceLoader: ResourcePatternResolver,
 ) : ShouldSpec({
     var mockWebServer = MockWebServer()
+
+    val aliasNames =
+      resourceLoader
+        .getResources("classpath:opensearch/*-alias.json")
+        .mapNotNull { "${it.filename?.removeSuffix("-alias.json")}" }
+    val indexNames =
+      resourceLoader
+        .getResources("classpath:opensearch/*-index.json")
+        .mapNotNull { "${it.filename?.removeSuffix("-index.json")}" }
+    val policyNames =
+      resourceLoader
+        .getResources("classpath:opensearch/*-policy.json")
+        .mapNotNull { "${it.filename?.removeSuffix("-policy.json")}_policy" }
+    val templateNames =
+      resourceLoader
+        .getResources("classpath:opensearch/*-template.json")
+        .mapNotNull { "${it.filename?.removeSuffix("-template.json")}_template" }
 
     beforeTest {
       mockWebServer = MockWebServer()
@@ -40,7 +59,7 @@ class OpenSearchSetupServiceTest(
         )
 
       // When: The index setup task is run
-      shouldThrow<Exception> { openSearchSetupService.start().block() }
+      shouldThrow<Exception> { openSearchSetupService.start() }
 
       // Then: The index creation endpoint shouldn't have been invoked
       mockWebServer.requestCount shouldBe 1
@@ -55,44 +74,58 @@ class OpenSearchSetupServiceTest(
       // Given: opensearch is already running and setup
       mockWebServer.dispatcher =
         createDispatcher(
-          mapOf(
-            "GET" to "/" to MockResponse().setResponseCode(200),
-            "GET" to "/_plugins/_ism/policies/events_policy" to MockResponse().setResponseCode(200),
-            "GET" to "/_index_template/events_template" to MockResponse().setResponseCode(200),
-            "HEAD" to "/events" to MockResponse().setResponseCode(200),
-            "GET" to "/_alias/user_events" to MockResponse().setResponseCode(200),
-          ),
+          buildMap {
+            put("GET" to "/", MockResponse().setResponseCode(200))
+            policyNames.forEach { put("GET" to "/_plugins/_ism/policies/$it", MockResponse().setResponseCode(200)) }
+            templateNames.forEach { put("GET" to "/_index_template/$it", MockResponse().setResponseCode(200)) }
+            indexNames.forEach { put("HEAD" to "/$it", MockResponse().setResponseCode(200)) }
+            aliasNames.forEach { put("GET" to "/_alias/$it", MockResponse().setResponseCode(200)) }
+          },
         )
 
       // When: The opensearch setup service is started
-      openSearchSetupService.start().block()
+      openSearchSetupService.start()
 
       // Then: Tasks should have been executed in order
-      mockWebServer.requestCount shouldBe 5
+      mockWebServer.requestCount shouldBe
+        listOf(
+          1,
+          policyNames.size,
+          templateNames.size,
+          indexNames.size,
+          aliasNames.size,
+        ).sum()
 
       mockWebServer.takeRequest().apply {
         path shouldBe "/"
         method shouldBe "GET"
       }
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_plugins/_ism/policies/events_policy"
-        method shouldBe "GET"
+      policyNames.forEach {
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_plugins/_ism/policies/$it"
+          method shouldBe "GET"
+        }
+      }
+      templateNames.forEach {
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_index_template/$it"
+          method shouldBe "GET"
+        }
       }
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_index_template/events_template"
-        method shouldBe "GET"
+      indexNames.forEach {
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/$it"
+          method shouldBe "HEAD"
+        }
       }
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/events"
-        method shouldBe "HEAD"
-      }
-
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_alias/user_events"
-        method shouldBe "GET"
+      aliasNames.forEach {
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_alias/$it"
+          method shouldBe "GET"
+        }
       }
     }
   })
