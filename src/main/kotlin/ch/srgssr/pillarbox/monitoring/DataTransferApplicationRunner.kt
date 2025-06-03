@@ -3,16 +3,12 @@ package ch.srgssr.pillarbox.monitoring
 import ch.srgssr.pillarbox.monitoring.event.EventDispatcherClient
 import ch.srgssr.pillarbox.monitoring.event.setup.OpenSearchSetupService
 import ch.srgssr.pillarbox.monitoring.log.logger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.runBlocking
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
+import org.springframework.web.reactive.function.client.WebClientResponseException
 
 /**
  * DataTransferApplicationRunner is responsible for initializing the OpenSearch setup and
@@ -45,20 +41,22 @@ class DataTransferApplicationRunner(
    *
    * @param args Application arguments.
    */
+  @Suppress("TooGenericExceptionCaught")
   override fun run(args: ApplicationArguments?) =
     runBlocking {
       try {
-        openSearchSetupService
-          .start()
-          .asFlow()
-          .catch {
-            logger.error("Failed to connect to OpenSearch:", it)
-            throw it
-          }.launchIn(CoroutineScope(Dispatchers.Default))
-          .join()
-
+        openSearchSetupService.start()
         logger.info("All setup tasks are completed, starting SSE client...")
         eventDispatcherClient.start().join()
+      } catch (e: WebClientResponseException) {
+        logger.error(
+          "OpenSearch connection failed " +
+            "| [Status Code: ${e.statusCode.value()}] " +
+            "| [Body: ${e.responseBodyAsString}]",
+          e,
+        )
+      } catch (e: Exception) {
+        logger.error("OpenSearch setup failed due to an unexpected error", e)
       } finally {
         terminationService.terminateApplication()
       }

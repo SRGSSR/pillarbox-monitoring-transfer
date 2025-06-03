@@ -10,6 +10,7 @@ import java.net.ServerSocket
 class PillarboxMonitoringTestConfiguration {
   companion object {
     private var openSearchPort: Int = 0
+    private var seeEventPort: Int = 0
 
     init {
       openSearchPort = getAvailablePort()
@@ -17,6 +18,12 @@ class PillarboxMonitoringTestConfiguration {
       System.setProperty("pillarbox.monitoring.opensearch.retry.max-attempts", "0")
       System.setProperty("pillarbox.monitoring.opensearch.retry.initial-interval", "0")
       System.setProperty("pillarbox.monitoring.opensearch.retry.max-interval", "0")
+
+      seeEventPort = getAvailablePort()
+      System.setProperty("pillarbox.monitoring.dispatch.uri", "http://localhost:$seeEventPort")
+      System.setProperty("pillarbox.monitoring.dispatch.sseRetry.max-attempts", "0")
+      System.setProperty("pillarbox.monitoring.dispatch.sseRetry.initial-interval", "0")
+      System.setProperty("pillarbox.monitoring.dispatch.sseRetry.max-interval", "0")
 
       // Register a shutdown hook to release resources if needed
       Runtime.getRuntime().addShutdownHook(

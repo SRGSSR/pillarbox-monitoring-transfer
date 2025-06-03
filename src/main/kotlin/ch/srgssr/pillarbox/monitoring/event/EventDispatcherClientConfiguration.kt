@@ -3,6 +3,7 @@ package ch.srgssr.pillarbox.monitoring.event
 import ch.srgssr.pillarbox.monitoring.event.config.RetryProperties
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
+import java.net.URI
 
 /**
  * Configuration class for Server-Sent Events (SSE) client settings in the application.
@@ -17,7 +18,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
  */
 @ConfigurationProperties(prefix = "pillarbox.monitoring.dispatch")
 data class EventDispatcherClientConfiguration(
-  val uri: String = "http://localhost:8080",
+  val uri: URI = URI("http://localhost:8080"),
   val cacheSize: Int = 200_000,
   val bufferCapacity: Int = 30_000,
   val saveChunkSize: Int = 6_000,

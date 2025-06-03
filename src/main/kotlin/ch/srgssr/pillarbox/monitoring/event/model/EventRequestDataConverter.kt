@@ -13,7 +13,13 @@ import com.fasterxml.jackson.databind.util.StdConverter
  * @see [DataProcessor]
  */
 internal class EventRequestDataConverter : StdConverter<EventRequest, EventRequest>() {
-  private val processors = listOf(UserAgentProcessor(), ContentRestrictionProcessor(), ErrorProcessor())
+  private val processors =
+    listOf(
+      UserAgentProcessor(),
+      ContentRestrictionProcessor(),
+      ErrorProcessor(),
+      ClampingNumberDataProcessor(),
+    )
 
   @Suppress("UNCHECKED_CAST")
   override fun convert(value: EventRequest): EventRequest {

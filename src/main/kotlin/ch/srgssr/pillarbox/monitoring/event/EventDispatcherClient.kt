@@ -9,7 +9,6 @@ import ch.srgssr.pillarbox.monitoring.flow.chunked
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
 import ch.srgssr.pillarbox.monitoring.log.trace
-import ch.srgssr.pillarbox.monitoring.opensearch.saveAllSuspend
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -18,23 +17,22 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.retryWhen
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.bodyToFlow
+import org.springframework.web.reactive.function.client.WebClientResponseException
 
 /**
- * Service responsible for managing a Server-Sent Events (SSE) connection to the event dispatcher service.
- * It handles incoming events, and manages retry behavior in case of connection failures.
+ * Service responsible for consuming events from a remote event dispatcher service via Server-Sent Events (SSE),
+ * enriching them with session metadata, and persisting them in bulk.
  *
- * @property eventRepository The repository where the events are stored.
- * @property properties The SSE client configuration containing the URI and retry settings.
+ * @property eventFlowProvider Provides a reactive flow of incoming [EventRequest]s.
+ * @property eventRepository The persistence layer for storing enriched events.
+ * @property properties Configuration for the buffer size, cache and batching.
  */
 @Service
 class EventDispatcherClient(
+  private val eventFlowProvider: EventFlowProvider,
   private val eventRepository: EventRepository,
   private val properties: EventDispatcherClientConfiguration,
-  webClientBuilder: WebClient.Builder,
 ) {
   private companion object {
     /**
@@ -44,27 +42,25 @@ class EventDispatcherClient(
   }
 
   private val sessionCache: LRUCache<String, Any> = LRUCache(properties.cacheSize)
-  private val webClient = webClientBuilder.baseUrl(properties.uri).build()
 
-  /**a
-   * Starts the SSE client, connecting to the configured SSE endpoint. It handles incoming events by
-   * delegating to the appropriate event handling methods and manages retries in case of connection failures.
+  /**
+   * Starts the reactive event processing pipeline.
+   *
+   * The pipeline:
+   * - Subscribes to the event stream.
+   * - Tracks basic metrics for incoming and processed events.
+   * - Buffers events with overflow policy (dropping oldest).
+   * - Batches events for efficient saving.
+   * - Separates "START" events to extract session data and populate the cache.
+   * - Enriches follow-up events with cached session info.
+   * - Persists all valid events using the repository.
+   *
+   * This method launches the flow in a background coroutine and returns the running [Job].
    */
   fun start(): Job =
-    webClient
-      .get()
-      .retrieve()
-      .bodyToFlow<EventRequest>()
-      .retryWhen(
-        properties.sseRetry.toRetryWhen(
-          onRetry = { cause, attempt, delayMillis ->
-            logger.warn(
-              "Retrying after failure: ${cause.message}. " +
-                "Attempt ${attempt + 1}. Waiting for ${delayMillis}ms",
-            )
-          },
-        ),
-      ).onEach { StatsTracker.increment("incomingEvents") }
+    eventFlowProvider
+      .start()
+      .onEach { StatsTracker.increment("incomingEvents") }
       .buffer(
         capacity = properties.bufferCapacity,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
@@ -100,10 +96,17 @@ class EventDispatcherClient(
       logger.trace { "Saving events $events" }
 
       timed("EventRepository.saveEvents") {
-        eventRepository.saveAllSuspend(events)
+        eventRepository.saveAll(events)
       }
+    } catch (e: WebClientResponseException) {
+      logger.error(
+        "A connection error occurred while saving the current batch " +
+          "| [Status Code: ${e.statusCode.value()}] " +
+          "| [Body: ${e.responseBodyAsString}]",
+        e,
+      )
     } catch (e: Exception) {
-      logger.error("An error occurred while saving the current batch", e)
+      logger.error("An unexpected error occurred while saving the current batch", e)
     }
   }
 }

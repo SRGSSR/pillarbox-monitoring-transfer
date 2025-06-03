@@ -2,8 +2,8 @@
   "actions": [
     {
       "add": {
-        "index": "events*",
-        "alias": "user_events",
+        "index": "core_events*",
+        "alias": "core_user_events",
         "filter": {
           "bool": {
             "must_not": [
