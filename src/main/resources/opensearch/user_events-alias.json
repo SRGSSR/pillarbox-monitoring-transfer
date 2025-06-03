@@ -1,0 +1,31 @@
+{
+  "actions": [
+    {
+      "add": {
+        "index": "core_events*",
+        "alias": "user_events",
+        "filter": {
+          "bool": {
+            "must_not": [
+              { "term": { "session.robot": true } }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "add": {
+        "index": "heartbeat_events*",
+        "alias": "user_events",
+        "filter": {
+          "bool": {
+            "must_not": [
+              { "term": { "session.robot": true } }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+

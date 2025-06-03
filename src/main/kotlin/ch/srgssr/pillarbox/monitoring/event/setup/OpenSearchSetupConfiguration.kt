@@ -1,9 +1,12 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
 import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
+import io.netty.channel.ChannelOption
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.web.reactive.function.client.WebClient
+import reactor.netty.http.client.HttpClient
 
 /**
  * Configuration class for OpenSearch setup.
@@ -19,6 +22,16 @@ class OpenSearchSetupConfiguration {
    * @return Configured WebClient instance for OpenSearch.
    */
   @Bean("openSearchWebClient")
-  fun openSearchWebClient(properties: OpenSearchConfigurationProperties): WebClient =
-    WebClient.create(properties.uri.toString())
+  fun openSearchWebClient(properties: OpenSearchConfigurationProperties): WebClient {
+    val httpClient =
+      HttpClient
+        .create()
+        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, properties.timeout)
+
+    return WebClient
+      .builder()
+      .baseUrl(properties.uri.toString())
+      .clientConnector(ReactorClientHttpConnector(httpClient))
+      .build()
+  }
 }

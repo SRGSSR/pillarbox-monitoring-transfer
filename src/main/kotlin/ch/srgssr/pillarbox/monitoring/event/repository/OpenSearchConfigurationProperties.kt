@@ -19,7 +19,7 @@ data class OpenSearchConfigurationProperties(
   val uri: URI = URI("http://localhost:9200"),
   @NestedConfigurationProperty
   val retry: RetryProperties = RetryProperties(),
-  val timeout: Long = 10_000,
+  val timeout: Int = 10_000,
 ) {
   /**
    * Retrieves the host and port in the format `host:port` based on the URI.

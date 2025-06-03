@@ -6,10 +6,12 @@ import ch.srgssr.pillarbox.monitoring.test.createDispatcher
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 
@@ -20,9 +22,20 @@ class AliasSetupTaskTest(
   private val aliasSetupTask: AliasSetupTask,
   private val openSearchProperties: OpenSearchConfigurationProperties,
   private val objectMapper: ObjectMapper,
+  private val resourceLoader: ResourcePatternResolver,
 ) : ShouldSpec({
 
     var mockWebServer = MockWebServer()
+    val aliasNames = mutableListOf<String>()
+
+    beforeSpec {
+      aliasNames +=
+        resourceLoader
+          .getResources("classpath:opensearch/*-alias.json")
+          .mapNotNull { it.filename?.removeSuffix("-alias.json") }
+
+      aliasNames.size shouldBeGreaterThan 0
+    }
 
     beforeTest {
       mockWebServer = MockWebServer()
@@ -37,20 +50,20 @@ class AliasSetupTaskTest(
       // Given: The alias is already created in opensearch
       mockWebServer.dispatcher =
         createDispatcher(
-          mapOf(
-            "GET" to "/_alias/user_events" to MockResponse().setResponseCode(200),
-          ),
+          aliasNames.associate { "GET" to "/_alias/$it" to MockResponse().setResponseCode(200) },
         )
 
       // When: The alias setup task is run
-      aliasSetupTask.run().block()
+      aliasSetupTask.run()
 
       // Then: The alias creation endpoint shouldn't have been invoked
-      mockWebServer.requestCount shouldBe 1
+      mockWebServer.requestCount shouldBe aliasNames.size
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_alias/user_events"
-        method shouldBe "GET"
+      aliasNames.forEach {
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_alias/$it"
+          method shouldBe "GET"
+        }
       }
     }
 
@@ -58,27 +71,29 @@ class AliasSetupTaskTest(
       // Given: The alias is already created in opensearch
       mockWebServer.dispatcher =
         createDispatcher(
-          mapOf(
-            "GET" to "/_alias/user_events" to MockResponse().setResponseCode(404),
-            "POST" to "/_aliases" to MockResponse().setResponseCode(201),
-          ),
+          buildMap {
+            aliasNames.forEach { put("GET" to "/_alias/$it", MockResponse().setResponseCode(404)) }
+            put("POST" to "/_aliases", MockResponse().setResponseCode(201))
+          },
         )
 
       // When: The alias setup task is run
-      aliasSetupTask.run().block()
+      aliasSetupTask.run()
 
       // Then: The alias creation endpoint should have been invoked
-      mockWebServer.requestCount shouldBe 2
+      mockWebServer.requestCount shouldBe (aliasNames.size * 2)
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_alias/user_events"
-        method shouldBe "GET"
-      }
+      aliasNames.forEach {
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_alias/$it"
+          method shouldBe "GET"
+        }
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_aliases"
-        method shouldBe "POST"
-        shouldNotThrow<Exception> { objectMapper.readTree(body.readUtf8()) }
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_aliases"
+          method shouldBe "POST"
+          shouldNotThrow<Exception> { objectMapper.readTree(body.readUtf8()) }
+        }
       }
     }
   })
