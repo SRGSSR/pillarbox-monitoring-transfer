@@ -1,41 +1,44 @@
 #!/bin/bash
 
 unset OPENSEARCH_HOST
+unset POLICY
 
 source "$(dirname "$0")/../lib/logging.sh"
 
 # Usage function
 usage() {
-  warn "Usage: $0 -h <opensearch_host>"
+  warn "Usage: $0 -h <opensearch_host> -p <policy>"
   echo ""
-  echo "This script retrieves the seq_no and primary_term for the 'events_policy' ISM policy."
+  echo "This script retrieves the seq_no and primary_term for the specified ISM policy."
   echo ""
   echo "Options:"
   echo "  -h <opensearch_host>   The OpenSearch host URL (e.g., http://localhost:9200)"
+  echo "  -p <policy>            The targeted ISM policy"
   echo ""
   echo "Example:"
-  echo "  $0 -h http://localhost:9200"
+  echo "  $0 -h http://localhost:9200 -p events_policy"
   echo ""
   exit 1
 }
 
 # Parse arguments
-while getopts "h:" opt; do
+while getopts "h:p:" opt; do
   case ${opt} in
     h ) OPENSEARCH_HOST=$OPTARG ;;
+    p ) POLICY=$OPTARG ;;
     * ) usage ;;
   esac
 done
 
 # Check if required arguments are set
-if [ -z "$OPENSEARCH_HOST" ]; then
-  error "Error: OpenSearch host is required."
+if [ -z "$OPENSEARCH_HOST" ] || [ -z "$POLICY" ]; then
+  error "Error: OpenSearch host and policy are required."
   usage
 fi
 
-info "Retrieving seq_no and primary_term for policy 'events_policy'..."
+info "Retrieving seq_no and primary_term for policy $POLICY..."
 
-GET_RESPONSE=$(curl -s -X GET "$OPENSEARCH_HOST/_plugins/_ism/policies/events_policy")
+GET_RESPONSE=$(curl -s -X GET "$OPENSEARCH_HOST/_plugins/_ism/policies/$POLICY")
 CURL_EXIT_CODE=$?
 
 # Check if curl failed

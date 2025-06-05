@@ -6,10 +6,12 @@ import ch.srgssr.pillarbox.monitoring.test.createDispatcher
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 
@@ -20,9 +22,20 @@ class IndexTemplateSetupTaskTest(
   private val indexTemplateSetupTask: IndexTemplateSetupTask,
   private val openSearchProperties: OpenSearchConfigurationProperties,
   private val objectMapper: ObjectMapper,
+  private val resourceLoader: ResourcePatternResolver,
 ) : ShouldSpec({
 
     var mockWebServer = MockWebServer()
+    val indexTemplateNames = mutableListOf<String>()
+
+    beforeSpec {
+      indexTemplateNames +=
+        resourceLoader
+          .getResources("classpath:opensearch/*-template.json")
+          .mapNotNull { "${it.filename?.removeSuffix("-template.json")}_template" }
+
+      indexTemplateNames.size shouldBeGreaterThan 0
+    }
 
     beforeTest {
       mockWebServer = MockWebServer()
@@ -37,20 +50,20 @@ class IndexTemplateSetupTaskTest(
       // Given: The index template is already created in opensearch
       mockWebServer.dispatcher =
         createDispatcher(
-          mapOf(
-            "GET" to "/_index_template/events_template" to MockResponse().setResponseCode(200),
-          ),
+          indexTemplateNames.associate { "GET" to "/_index_template/$it" to MockResponse().setResponseCode(200) },
         )
 
       // When: The index template setup task is run
-      indexTemplateSetupTask.run().block()
+      indexTemplateSetupTask.run()
 
       // Then: The index template creation endpoint shouldn't have been invoked
-      mockWebServer.requestCount shouldBe 1
+      mockWebServer.requestCount shouldBe indexTemplateNames.size
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_index_template/events_template"
-        method shouldBe "GET"
+      indexTemplateNames.forEach {
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_index_template/$it"
+          method shouldBe "GET"
+        }
       }
     }
 
@@ -58,27 +71,31 @@ class IndexTemplateSetupTaskTest(
       // Given: The index template is not created in opensearch
       mockWebServer.dispatcher =
         createDispatcher(
-          mapOf(
-            "GET" to "/_index_template/events_template" to MockResponse().setResponseCode(404),
-            "PUT" to "/_index_template/events_template" to MockResponse().setResponseCode(201),
-          ),
+          buildMap {
+            indexTemplateNames.forEach {
+              put("GET" to "/_index_template/$it", MockResponse().setResponseCode(404))
+              put("PUT" to "/_index_template/$it", MockResponse().setResponseCode(201))
+            }
+          },
         )
 
       // When: The index template setup task is run
-      indexTemplateSetupTask.run().block()
+      indexTemplateSetupTask.run()
 
       // Then: The index template creation endpoint should have been invoked
-      mockWebServer.requestCount shouldBe 2
+      mockWebServer.requestCount shouldBe (indexTemplateNames.size * 2)
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_index_template/events_template"
-        method shouldBe "GET"
-      }
+      indexTemplateNames.forEach {
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_index_template/$it"
+          method shouldBe "GET"
+        }
 
-      mockWebServer.takeRequest().apply {
-        path shouldBe "/_index_template/events_template"
-        method shouldBe "PUT"
-        shouldNotThrow<Exception> { objectMapper.readTree(body.readUtf8()) }
+        mockWebServer.takeRequest().apply {
+          path shouldBe "/_index_template/$it"
+          method shouldBe "PUT"
+          shouldNotThrow<Exception> { objectMapper.readTree(body.readUtf8()) }
+        }
       }
     }
   })

@@ -1,6 +1,6 @@
 {
   "index_patterns": [
-    "events*"
+    "core_events*"
   ],
   "priority": 100,
   "template": {
@@ -8,7 +8,7 @@
       "number_of_shards": 3,
       "number_of_replicas": 1,
       "refresh_interval": "60s",
-      "plugins.index_state_management.rollover_alias": "events"
+      "plugins.index_state_management.rollover_alias": "core_events"
     },
     "mappings": {
       "dynamic": false,
@@ -83,16 +83,6 @@
             },
             "position_timestamp": {
               "type": "long"
-            },
-            "screen": {
-              "properties": {
-                "height": {
-                  "type": "float"
-                },
-                "width": {
-                  "type": "float"
-                }
-              }
             },
             "stall": {
               "properties": {

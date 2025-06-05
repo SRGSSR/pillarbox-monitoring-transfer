@@ -3,11 +3,10 @@ package ch.srgssr.pillarbox.monitoring.event.setup
 import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 
 /**
  * Service responsible for setting up the OpenSearch environment and ensuring
@@ -42,27 +41,29 @@ class OpenSearchSetupService(
    * the retry settings defined in [properties]. If retries are exhausted, the
    * application will be terminated.
    */
-  fun start(): Mono<*> =
+  suspend fun start() {
     checkOpenSearchHealth()
-      .retryWhen(
-        properties.retry.create().doBeforeRetry {
-          logger.info("Retrying OpenSearch health check...")
-        },
-      ).doOnSuccess { logger.info("OpenSearch is healthy, proceeding with setup...") }
-      .then(runSetupTasks())
+    runSetupTasks()
+  }
 
-  private fun checkOpenSearchHealth(): Mono<*> =
+  private suspend fun checkOpenSearchHealth() {
     webClient
       .get()
       .uri("/")
       .retrieve()
       .toBodilessEntity()
+      .retryWhen(
+        properties.retry.create().doBeforeRetry {
+          logger.info("Retrying OpenSearch health check...")
+        },
+      ).doOnSuccess { logger.info("OpenSearch is healthy, proceeding with setup...") }
+      .awaitSingleOrNull()
+  }
 
-  private fun runSetupTasks(): Mono<*> =
-    Flux
-      .fromIterable(tasks)
-      .concatMap { task ->
-        logger.info { "Running setup task: ${task::class.simpleName}" }
-        task.run()
-      }.last()
+  private suspend fun runSetupTasks() {
+    tasks.forEach { task ->
+      logger.info { "Running setup task: ${task::class.simpleName}" }
+      task.run()
+    }
+  }
 }

@@ -9,7 +9,6 @@ import ch.srgssr.pillarbox.monitoring.flow.chunked
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
 import ch.srgssr.pillarbox.monitoring.log.trace
-import ch.srgssr.pillarbox.monitoring.opensearch.saveAllSuspend
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,6 +20,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.reactive.function.client.bodyToFlow
 
 /**
@@ -100,10 +100,17 @@ class EventDispatcherClient(
       logger.trace { "Saving events $events" }
 
       timed("EventRepository.saveEvents") {
-        eventRepository.saveAllSuspend(events)
+        eventRepository.saveAll(events)
       }
+    } catch (e: WebClientResponseException) {
+      logger.error(
+        "A connection error occurred while saving the current batch " +
+          "| [Status Code: ${e.statusCode.value()}] " +
+          "| [Body: ${e.responseBodyAsString}]",
+        e,
+      )
     } catch (e: Exception) {
-      logger.error("An error occurred while saving the current batch", e)
+      logger.error("An unexpected error occurred while saving the current batch", e)
     }
   }
 }
