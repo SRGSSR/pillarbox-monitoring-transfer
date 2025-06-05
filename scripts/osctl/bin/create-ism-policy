@@ -2,38 +2,32 @@
 
 unset OPENSEARCH_HOST
 unset POLICY
-unset SEQ_NO
-unset PRIMARY_TERM
 unset POLICY_JSON
 
 source "$(dirname "$0")/../lib/logging.sh"
 
 # Usage function
 usage() {
-  warn "Usage: $0 -h <opensearch_host> -p <policy> -s <seq_no> -r <primary_term> -d <policy_json>"
+  warn "Usage: $0 -h <opensearch_host> -p <policy> -d <policy_json>"
   echo ""
-  echo "This script updates the specified ISM policy in OpenSearch."
+  echo "This script creates the specified ISM policy in OpenSearch."
   echo ""
   echo "Options:"
   echo "  -h <opensearch_host>   The OpenSearch host URL (e.g., http://localhost:9200)"
   echo "  -p <policy>            The target ISM policy"
-  echo "  -s <seq_no>            The sequence number (seq_no) of the existing policy"
-  echo "  -r <primary_term>      The primary term (primary_term) of the existing policy"
   echo "  -d <policy_json>       The JSON payload for the policy"
   echo ""
   echo "Example:"
-  echo "  $0 -h http://localhost:9200 -p events_policy -s 3 -r 1 -d '{ ... }' "
+  echo "  $0 -h http://localhost:9200 -p events_policy -d '{ ... }' "
   echo ""
   exit 1
 }
 
 # Parse arguments
-while getopts "h:p:s:r:d:" opt; do
+while getopts "h:p:d:" opt; do
   case ${opt} in
     h ) OPENSEARCH_HOST=$OPTARG ;;
     p ) POLICY=$OPTARG ;;
-    s ) SEQ_NO=$OPTARG ;;
-    r ) PRIMARY_TERM=$OPTARG ;;
     d ) POLICY_JSON=$OPTARG ;;
     * ) usage ;;
   esac
@@ -45,10 +39,10 @@ if [ -z "$OPENSEARCH_HOST" ] || [ -z "$POLICY_JSON" ] || [ -z "$SEQ_NO" ] || [ -
   usage
 fi
 
-info "Updating ISM policy '$POLICY'..."
+info "Creating ISM policy '$POLICY'..."
 
-UPDATE_URL="$OPENSEARCH_HOST/_plugins/_ism/policies/$POLICY?if_seq_no=$SEQ_NO&if_primary_term=$PRIMARY_TERM"
-UPDATE_RESPONSE=$(curl -s -X PUT "$UPDATE_URL" -H 'Content-Type: application/json' -d "$POLICY_JSON")
+CREATE_URL="$OPENSEARCH_HOST/_plugins/_ism/policies/$POLICY"
+CREATE_RESPONSE=$(curl -s -X PUT "$CREATE_URL" -H 'Content-Type: application/json' -d "$POLICY_JSON")
 CURL_EXIT_CODE=$?
 
 # Check if curl failed
@@ -57,11 +51,10 @@ if [ $CURL_EXIT_CODE -ne 0 ]; then
   exit 1
 fi
 
-
-# Check if template update was successful
+# Check if template created was successful
 if echo "$RESPONSE" | grep -q '"acknowledged":true'; then
-  success "ISM policy '$POLICY' updated successfully."
+  success "ISM policy '$POLICY' created successfully."
 else
-  error "Error: Failed to update ISM policy. Response: $UPDATE_RESPONSE"
+  error "Error: Failed to create the ISM policy. Response: $CREATE_RESPONSE"
   exit 1
 fi

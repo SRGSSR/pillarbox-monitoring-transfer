@@ -1,42 +1,44 @@
 #!/bin/bash
 
 unset OPENSEARCH_HOST
+unset INDEX
 
 source "$(dirname "$0")/../lib/logging.sh"
 
 # Usage function
 usage() {
-  warn "Usage: $0 -h <opensearch_host>"
+  warn "Usage: $0 -h <opensearch_host> -i <index>"
   echo ""
-  echo "This script forces an immediate rollover of the 'events' index in OpenSearch."
+  echo "This script forces an immediate rollover of a specified index in OpenSearch."
   echo ""
   echo "Options:"
   echo "  -h <opensearch_host>   The OpenSearch host URL (e.g., http://localhost:9200)"
+  echo "  -i <index>             The index to rollover"
   echo ""
   echo "Example:"
-  echo "  $0 -h http://localhost:9200"
+  echo "  $0 -h http://localhost:9200 -i events"
   echo ""
-  echo "This script is part of the monitoring setup and is used to force a rollover of the 'events' index, ensuring a new index is created."
   exit 1
 }
 
 # Parse arguments
-while getopts "h:" opt; do
+while getopts "h:i:" opt; do
   case ${opt} in
     h ) OPENSEARCH_HOST=$OPTARG ;;
+    i ) INDEX=$OPTARG ;;
     * ) ;;
   esac
 done
 
 # Check if required arguments are set
-if [ -z "$OPENSEARCH_HOST" ]; then
-  error "Error: OpenSearch host is required."
+if [ -z "$OPENSEARCH_HOST" ] || [ -z "$INDEX" ]; then
+  error "Error: OpenSearch host and index are required."
   usage
 fi
 
 
-info "Forcing rollover..."
-ROLLOVER_RESPONSE=$(curl -s -X POST "$OPENSEARCH_HOST/events/_rollover" \
+info "Forcing rollover on index '$INDEX'..."
+ROLLOVER_RESPONSE=$(curl -s -X POST "$OPENSEARCH_HOST/$INDEX/_rollover" \
   -H "Content-Type: application/json" \
   -d '{
         "conditions": {
@@ -53,7 +55,7 @@ fi
 
 # Check if rollover was successful
 if echo "$ROLLOVER_RESPONSE" | grep -q '"acknowledged":true'; then
-  success "Rollover completed successfully!"
+  success "Rollover completed successfully for index '$INDEX'"
 else
   error "Error: Rollover failed. Response: $ROLLOVER_RESPONSE"
   exit 1

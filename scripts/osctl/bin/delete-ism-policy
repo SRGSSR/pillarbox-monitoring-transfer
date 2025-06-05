@@ -9,11 +9,11 @@ source "$(dirname "$0")/../lib/logging.sh"
 usage() {
   warn "Usage: $0 -h <opensearch_host> -p <policy>"
   echo ""
-  echo "This script retrieves the seq_no and primary_term for the specified ISM policy."
+  echo "Deletes the specified ISM policy in OpenSearch."
   echo ""
   echo "Options:"
   echo "  -h <opensearch_host>   The OpenSearch host URL (e.g., http://localhost:9200)"
-  echo "  -p <policy>            The targeted ISM policy"
+  echo "  -p <policy>            The target ISM policy to delete"
   echo ""
   echo "Example:"
   echo "  $0 -h http://localhost:9200 -p events_policy"
@@ -32,13 +32,14 @@ done
 
 # Check if required arguments are set
 if [ -z "$OPENSEARCH_HOST" ] || [ -z "$POLICY" ]; then
-  error "Error: OpenSearch host and policy are required."
+  error "Error: All parameters are required."
   usage
 fi
 
-info "Retrieving seq_no and primary_term for policy '$POLICY'..."
+info "Deleting ISM policy '$POLICY'..."
 
-GET_RESPONSE=$(curl -s -X GET "$OPENSEARCH_HOST/_plugins/_ism/policies/$POLICY")
+DELETE_URL="$OPENSEARCH_HOST/_plugins/_ism/policies/$POLICY"
+DELETE_RESPONSE=$(curl -s -X DELETE "$DELETE_URL" -H 'Content-Type: application/json')
 CURL_EXIT_CODE=$?
 
 # Check if curl failed
@@ -47,15 +48,10 @@ if [ $CURL_EXIT_CODE -ne 0 ]; then
   exit 1
 fi
 
-SEQ_NO=$(echo "$GET_RESPONSE" | jq -r '._seq_no')
-PRIMARY_TERM=$(echo "$GET_RESPONSE" | jq -r '._primary_term')
-
-if [ "$SEQ_NO" == "null" ] || [ "$PRIMARY_TERM" == "null" ]; then
-  error "Error: Could not extract seq_no and primary_term. Response: $GET_RESPONSE"
+# Check if deletion was successful
+if echo "$DELETE_RESPONSE" | grep -q '"acknowledged":true';  then
+  success "ISM policy '$POLICY' deleted successfully."
+else
+  error "Error: Failed to delete the ISM policy. Response: $DELETE_RESPONSE"
   exit 1
 fi
-
-success "Retrieved successfully:"
-
-echo "seq_no=$SEQ_NO"
-echo "primary_term=$PRIMARY_TERM"

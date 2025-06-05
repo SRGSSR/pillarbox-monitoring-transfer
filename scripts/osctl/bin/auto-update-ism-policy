@@ -1,30 +1,33 @@
 #!/bin/bash
 
 unset OPENSEARCH_HOST
+unset POLICY
 unset POLICY_JSON
 
 source "$(dirname "$0")/../lib/logging.sh"
 
 # Usage function
 usage() {
-  warn "Usage: $0 -h <opensearch_host> -d <policy_json>"
+  warn "Usage: $0 -h <opensearch_host> -p <policy> -d <policy_json>"
   echo ""
-  echo "This script automatically retrieves seq_no and primary_term, then updates the 'events_policy' ISM policy in OpenSearch."
+  echo "This script automatically retrieves seq_no and primary_term, then updates the specified ISM policy in OpenSearch."
   echo ""
   echo "Options:"
   echo "  -h <opensearch_host>   The OpenSearch host URL (e.g., http://localhost:9200)"
+  echo "  -p <policy>            The targeted ISM policy"
   echo "  -d <policy_json>       The JSON payload for the policy update"
   echo ""
   echo "Example:"
-  echo "  $0 -h http://localhost:9200 -d '{ ... }'"
+  echo "  $0 -h http://localhost:9200 -p events_policy -d '{ ... }'"
   echo ""
   exit 1
 }
 
 # Parse arguments
-while getopts "h:d:" opt; do
+while getopts "h:p:d:" opt; do
   case ${opt} in
     h ) OPENSEARCH_HOST=$OPTARG ;;
+    p ) POLICY=$OPTARG ;;
     d ) POLICY_JSON=$OPTARG ;;
     * ) usage ;;
   esac
@@ -37,7 +40,7 @@ if [ -z "$OPENSEARCH_HOST" ] || [ -z "$POLICY_JSON" ]; then
 fi
 
 SEQ_TERM_OUTPUT=$(
-  "$(dirname "$0")/get-ism-seq" -h "$OPENSEARCH_HOST" \
+  "$(dirname "$0")/get-ism-seq" -h "$OPENSEARCH_HOST" -p "$POLICY" \
     2>&1 | tee /dev/tty
 )
 SEQ_EXIT_CODE=$?
@@ -52,4 +55,4 @@ SEQ_NO=$(echo "$SEQ_TERM_OUTPUT" | grep 'seq_no=' | cut -d '=' -f2)
 PRIMARY_TERM=$(echo "$SEQ_TERM_OUTPUT" | grep 'primary_term=' | cut -d '=' -f2)
 
 # Call the second script to update the policy, passing the retrieved values
-"$(dirname "$0")/update-ism-policy" -h "$OPENSEARCH_HOST" -d "$POLICY_JSON" -s "$SEQ_NO" -r "$PRIMARY_TERM"
+"$(dirname "$0")/update-ism-policy" -h "$OPENSEARCH_HOST"  -p "$POLICY"  -d "$POLICY_JSON" -s "$SEQ_NO" -r "$PRIMARY_TERM"

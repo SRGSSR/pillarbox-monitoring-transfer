@@ -1,0 +1,54 @@
+#!/bin/bash
+
+unset OPENSEARCH_HOST
+unset INDEX_PATTERN
+
+source "$(dirname "$0")/../lib/logging.sh"
+
+# Usage function
+usage() {
+  warn "Usage: $0 -h <opensearch_host> -i <index_name>"
+  echo ""
+  echo "Deletes indexes by name or pattern in OpenSearch if they exists."
+  echo ""
+  echo "Options:"
+  echo "  -h <opensearch_host>     The OpenSearch host URL (e.g., http://localhost:9200)"
+  echo "  -i <index_pattern>       The name or pattern to delete (e.g. events)"
+  echo ""
+  echo "Example:"
+  echo "  $0 -h http://localhost:9200 -i events"
+  echo ""
+  exit 1
+}
+
+# Parse arguments
+while getopts "h:i:" opt; do
+  case ${opt} in
+    h ) OPENSEARCH_HOST=$OPTARG ;;
+    i ) INDEX_PATTERN=$OPTARG ;;
+    * ) usage ;;
+  esac
+done
+
+# Check required arguments
+if [ -z "$OPENSEARCH_HOST" ] || [ -z "$INDEX_PATTERN" ]; then
+  error "Error: All parameters are required."
+  usage
+fi
+
+# Delete index
+info "Deleting index '$INDEX_PATTERN'..."
+DELETE_RESPONSE=$(curl -s -X DELETE "$OPENSEARCH_HOST/$INDEX_PATTERN")
+CURL_EXIT_CODE=$?
+
+if [ $CURL_EXIT_CODE -ne 0 ]; then
+  error "Error: Failed to delete index. Curl exited with code $CURL_EXIT_CODE"
+  exit 1
+fi
+
+if echo "$DELETE_RESPONSE" | grep -q '"acknowledged":true'; then
+  success "Index '$INDEX_PATTERN' deleted successfully."
+else
+  error "Failed to delete index. Response: $DELETE_RESPONSE"
+  exit 1
+fi
