@@ -7,16 +7,34 @@ usage() {
   warn "Usage: $0 <command> [options]"
   echo ""
   echo "Commands:"
-  echo "  force-rollover     Force rollover of the 'events' index"
-  echo "  update-alias       Update the OpenSearch alias"
-  echo "  update-template    Update the OpenSearch index template"
-  echo "  update-ism-policy  Update the ISM policy"
+  echo ""
+  echo "Index Lifecycle Management (ISM):"
+  echo "  create-ism-policy      Create a new ISM policy"
+  echo "  update-ism-policy      Update an existing ISM policy"
+  echo "  auto-update-ism-policy Automatically update ISM policy based on current settings"
+  echo "  get-ism-seq            Retrieve the current ISM sequence number for an index"
+  echo "  delete-ism-policy      Delete the specified ISM policy in OpenSearch"
+  echo ""
+  echo "Index Operations:"
+  echo "  force-rollover         Force rollover of the specified index"
+  echo "  create-index           Create a new index with template and settings"
+  echo "  delete-index           Delete an index or multiple indexes by pattern or name"
+  echo "  update-template        Update the OpenSearch index template"
+  echo "  delete-template        Delete the specified template in OpenSearch"
+  echo ""
+  echo "Alias Management:"
+  echo "  update-alias           Manage aliases"
+  echo "  delete-alias           Delete an alias in OpenSearch for the given index pattern"
+  echo ""
+  echo "Utility:"
+  echo "  version                Show the version of this CLI"
   echo ""
   echo "Example:"
   echo "  $0 update-alias -h http://localhost:9200 -t '{\"actions\":...}'"
   echo ""
   exit 1
 }
+
 
 print_version() {
   if [ -f ".version" ]; then
@@ -39,40 +57,16 @@ if [ -z "$1" ]; then
   usage
 fi
 
-COMMAND=$1
-shift  # Shift removes the first argument so the rest can be passed to the sub-script
-
-# Define script paths
-BIN_DIR="$(dirname "$0")/bin"  # Gets the directory of this script
-AUTO_UPDATE_ISM_POLICY="$BIN_DIR/auto-update-ism-policy"
-FORCE_ROLLOVER_SCRIPT="$BIN_DIR/force-rollover"
-GET_ISM_SEQ="$BIN_DIR/get-ism-seq"
-UPDATE_ALIAS_SCRIPT="$BIN_DIR/update-alias"
-UPDATE_TEMPLATE_SCRIPT="$BIN_DIR/update-index-template"
-UPDATE_ISM_POLICY="$BIN_DIR/update-ism-policy"
-
 # Redirect to the appropriate script
-case "$COMMAND" in
-  auto-update-ism-policy)
-    exec "$AUTO_UPDATE_ISM_POLICY" "$@"
-    ;;
-  force-rollover)
-    exec "$FORCE_ROLLOVER_SCRIPT" "$@"
-    ;;
-  get-ism-seq)
-    exec "$GET_ISM_SEQ" "$@"
-    ;;
-  update-alias)
-    exec "$UPDATE_ALIAS_SCRIPT" "$@"
-    ;;
-  update-template)
-    exec "$UPDATE_TEMPLATE_SCRIPT" "$@"
-    ;;
-  update-ism-policy)
-    exec "$UPDATE_ISM_POLICY" "$@"
-    ;;
-  *)
-    error "Error: Invalid command '$COMMAND'"
-    usage
-    ;;
-esac
+BIN_DIR="$(dirname "$0")/bin"
+COMMAND=$1
+shift # Remove the first argument so the rest can be passed to the sub-script
+
+# Check if command is valid
+SCRIPT="$BIN_DIR/$COMMAND"
+if [[ -x "$SCRIPT" && -f "$SCRIPT" ]]; then
+  exec "$SCRIPT" "$@"
+else
+  error "Error: Invalid command '$COMMAND'"
+  usage
+fi

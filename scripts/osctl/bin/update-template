@@ -1,43 +1,46 @@
 #!/bin/bash
 
 unset OPENSEARCH_HOST
+unset TEMPLATE
 unset TEMPLATE_JSON
 
 source "$(dirname "$0")/../lib/logging.sh"
 
 # Usage function
 usage() {
-  echo "Usage: $0 -h <opensearch_host> -t '<template_json>'"
+  echo "Usage: $0 -h <opensearch_host> -t <template_name> -d '<template_json>'"
   echo ""
-  echo "This script updates the 'events_template' index template in OpenSearch."
+  echo "This script creates/updates the specified index template in OpenSearch."
   echo ""
   echo "Options:"
   echo "  -h <opensearch_host>   The OpenSearch host URL (e.g., http://localhost:9200)"
-  echo "  -t '<template_json>'   The JSON template to apply (must be enclosed in single quotes)"
+  echo "  -t <template>          The targeted index template"
+  echo "  -d <template_json>     The JSON template to apply"
   echo ""
   echo "Example:"
-  echo "  $0 -h http://localhost:9200 -t '{ ... }'"
+  echo "  $0 -h http://localhost:9200 -t 'events_template' -d '{ ... }'"
   echo ""
   exit 1
 }
 
 # Parse arguments
-while getopts "h:t:" opt; do
+while getopts "h:t:d:" opt; do
   case ${opt} in
     h ) OPENSEARCH_HOST=$OPTARG ;;
-    t ) TEMPLATE_JSON=$OPTARG ;;
+    t ) TEMPLATE=$OPTARG ;;
+    d ) TEMPLATE_JSON=$OPTARG ;;
     * ) ;;
   esac
 done
 
 # Check if required arguments are set
 if [ -z "$OPENSEARCH_HOST" ] || [ -z "$TEMPLATE_JSON" ]; then
-  error "Error: OpenSearch host and template JSON are required."
+  error "Error: All parameters are required."
   usage
 fi
 
-info "Updating template..."
-TEMPLATE_UPDATE_RESPONSE=$(curl -s -X PUT "$OPENSEARCH_HOST/_index_template/events_template" \
+info "Updating template '$TEMPLATE'..."
+TEMPLATE_UPDATE_RESPONSE=$(curl -s -X PUT "$OPENSEARCH_HOST/_index_template/$TEMPLATE" \
   -H "Content-Type: application/json" \
   -d "$TEMPLATE_JSON")
 CURL_EXIT_CODE=$?
@@ -50,7 +53,7 @@ fi
 
 # Check if template update was successful
 if echo "$TEMPLATE_UPDATE_RESPONSE" | grep -q '"acknowledged":true'; then
-  success "Template updated successfully!"
+  success "Index template '$TEMPLATE' updated successfully."
 else
   error "Template update failed. Response: $TEMPLATE_UPDATE_RESPONSE"
   exit 1

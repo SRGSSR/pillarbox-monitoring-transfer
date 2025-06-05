@@ -2,7 +2,7 @@
 
 ## Overview
 
-`osctl` is a command-line tool for managing OpenSearch operations for Pillarbox monitoring.
+`osctl` is a command-line tool for managing OpenSearch operations.
 
 ## Installation
 
@@ -20,16 +20,16 @@ installation script. The `install-osctl.sh` script will:
    Before running the installation script, make sure you have `jq` and `curl` installed. These tools
    are required to download and process data during installation.
 
-   * On **Debian/Ubuntu** and other apt-based systems:
-     ```bash
-     sudo apt update
-     sudo apt install -y curl jq
-     ```
+  * On **Debian/Ubuntu** and other apt-based systems:
+    ```bash
+    sudo apt update
+    sudo apt install -y curl jq
+    ```
 
-   * Or in a yum-based systems:
-     ```bash
-     sudo yum install -y curl jq
-     ```
+  * Or in a yum-based systems:
+    ```bash
+    sudo yum install -y curl jq
+    ```
 
 2. **Create a dedicated osctl directory**
 
@@ -91,58 +91,59 @@ osctl <command> [options]
 
 ### Commands
 
-- **update-template**: Updates the `events_template` index template.
-  [Learn about index templates](http://opensearch.org/docs/latest/im-plugin/index-templates/)
-- **update-alias**: Updates the `user_events` alias with a new configuration.
+- **create-index**: Creates the specified index.
+  [Learn about index creation](https://docs.opensearch.org/docs/latest/api-reference/index-apis/create-index/)
+- **delete-index**: Deletes the specified index.
+- **update-template**: Updates the specified index template or creates it if it doesn't exist.
+  [Learn about index templates](https://opensearch.org/docs/latest/im-plugin/index-templates/)
+- **delete-template**: Deletes the specified index template.
+- **update-alias**: Creates or updates aliases by using the provided actions.
   [Learn about index aliases](https://opensearch.org/docs/latest/im-plugin/index-alias/)
-- **force-rollover**: Forces an immediate rollover of the `events` index.
+- **delete-alias**: Removes an alias from the specified index.
+- **force-rollover**: Forces an immediate rollover of the specified index.
   [Learn about rollover actions](https://opensearch.org/docs/latest/im-plugin/ism/policies/#rollover-action)
-- **get-ism-seq**: Retrieves the current `seq_no` and `primary_term` of the `events_policy` ISM
-  policy.
-- **update-ism-policy**: Updates the `events_policy` ISM policy in OpenSearch.
+- **create-ism-policy**: Creates the specified ISM policy.
+  [Learn about ISM policies](https://opensearch.org/docs/latest/im-plugin/ism/policies/)
+- **get-ism-seq**: Retrieves the `seq_no` and `primary_term` of the specified ISM policy.
+- **update-ism-policy**: Updates the specified ISM policy.
 - **auto-update-ism-policy**: Automatically retrieves `seq_no` and `primary_term`, then updates the
-  `events_policy` ISM policy.
-  [Learn about ISM policies](https://docs.opensearch.org/docs/latest/im-plugin/ism/policies/)
+  specified ISM policy.
+- **delete-ism-policy**: Deletes the specified ISM policy.
 
-## Examples
+## Guidelines
 
-#### Update the index template:
+### Updating an alias
 
+Alias updates are handled by passing a JSON payload to the OpenSearch _aliases API. This payload
+can include multiple add and/or remove actions. It's your responsibility to define the correct
+actions according to your use case.
+
+Example:
 ```bash
-osctl update-template -h http://localhost:9200 -t '{...}'
+osctl update-alias -h http://localhost:9200 -d '{
+  "actions": [
+    { "remove": { "index": "events-v1", "alias": "user_events" }},
+    { "add":    { "index": "events-v2", "alias": "user_events" }}
+  ]
+}'
 ```
 
-#### Update an alias:
+Refer to the official OpenSearch documentation for details:
+[Add or remove indexes from an alias](https://docs.opensearch.org/docs/latest/im-plugin/index-alias/#add-or-remove-indexes)
 
-```bash
-osctl update-alias -h http://localhost:9200 -t '{...}'
-```
-
-#### Force an immediate rollover:
-
-```bash
-osctl force-rollover -h http://localhost:9200
-```
-
-#### Update ISM Policy:
-
-```bash
-osctl auto-update-ism-policy -h http://localhost:9200 -d '{...}'
-```
-
-## Guidelines for updating the index template
+### Updating an index template
 
 When you update an index template in OpenSearch, changes are only applied to new indices. Existing
 indices will continue using the old configuration. Depending on your use case, you can choose
 between a deferred or immediate application of the changes.
 
-### If you can wait for the next rollover:
+#### If you can wait for the next rollover:
 
 This is the simplest and most common approach for non-urgent changes.
 
 1. Run:
    ```bash
-   osctl update-template -h <opensearch_host> -t '{...}'
+   osctl update-template -h <host> -t <template_name> -d '{...}'
    ```
 2. The updated template will be applied automatically the next time OpenSearch performs a rollover
    and creates a new index.
@@ -150,22 +151,20 @@ This is the simplest and most common approach for non-urgent changes.
 Recommended for: Routine updates that do not require immediate application (e.g., adding new
 optional fields, adjusting settings that are not critical to current data).
 
-### If you need the change to take effect immediately:
+#### If you need the change to take effect immediately:
 
 For cases where changes must be reflected without delay, follow this process:
 
-1. Update the template:
-   ```bash
-   osctl update-template -h <opensearch_host> -t '{...}'
-   ```
-2. Trigger an immediate rollover:
-   ```bash
-   osctl force-rollover -h <opensearch_host>
-   ```
-3. Update the alias to point to the new index:
-   ```bash
-   osctl update-alias -h <opensearch_host> -t '{...}'
-   ```
+```bash
+# 1. Update the template
+osctl update-template -h <host> -t <template_name> -d '{...}'
+
+# 2. Trigger a rollover
+osctl force-rollover -h <host> -i <index_name>
+
+# 3. Update the alias if necessary
+osctl update-alias -h <host> -d '{...}'
+```
 
 This sequence ensures that the new template is used right away by creating a fresh index and
 updating the alias to target it.
@@ -173,31 +172,21 @@ updating the alias to target it.
 Recommended for: Situations where changes must be applied without waiting for the scheduled
 rollover.
 
-## Guidelines for updating the ISM Policy
+### Updating an ISM Policy
 
 To update the `events_policy` ISM policy in OpenSearch, you need the current `seq_no` and
 `primary_term`. This ensures that the update is performed safely and correctly.
 
 There are two ways to do this:
 
-### 🔁 **Recommended: Automatic Update**
+#### (Recommended) Automatic Update
 
 This method uses the `auto-update-ism-policy` script, which retrieves the `seq_no` and
 `primary_term` automatically before applying the update.
 
-#### Usage
-
+Usage:
 ```bash
-osctl auto-update-ism-policy -h <opensearch_host> -d '<policy_json>'
-```
-
-Replace `<opensearch_host>` with your OpenSearch URL (e.g., `http://localhost:9200`) and
-`<policy_json>` with your ISM policy definition.
-
-#### Example
-
-```bash
-osctl auto-update-ism-policy -h http://localhost:9200 -d '{...}'
+osctl auto-update-ism-policy -h <host> -p <policy_name> -d '{...}'
 ```
 
 This script will:
@@ -207,17 +196,17 @@ This script will:
 
 If anything goes wrong, you can fall back to the manual method below.
 
-### 🛠️ **Manual Update**
+#### Manual Update
 
 If the automatic method fails, or you want full control, you can retrieve the metadata manually and
 then run the update yourself.
 
-#### Step 1: Retrieve `seq_no` and `primary_term`
+##### Step 1: Retrieve `seq_no` and `primary_term`
 
 Use the helper script `get-ism-seq`:
 
 ```bash
-osctl get-ism-seq -h <opensearch_host>
+osctl get-ism-seq -h <opensearch_host> -p <policy_name>
 ```
 
 You will get an output like:
@@ -227,16 +216,10 @@ seq_no=42
 primary_term=3
 ```
 
-#### Step 2: Apply the update using `update-ism-policy`
+##### Step 2: Apply the update using `update-ism-policy`
 
 Run the update script using the retrieved values:
 
 ```bash
-osctl update-ism-policy -h <opensearch_host> -d '<policy_json>' -s <seq_no> -r <primary_term>
-```
-
-#### Example
-
-```bash
-osctl update-ism-policy -h http://localhost:9200 -d '{...}' -s 42 -r 3
+osctl update-ism-policy -h <opensearch_host> -p <policy_name> -d '<policy_json>' -s <seq_no> -r <primary_term>
 ```

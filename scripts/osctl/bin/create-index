@@ -1,0 +1,72 @@
+#!/bin/bash
+
+unset OPENSEARCH_HOST
+unset INDEX_NAME
+unset INDEX_JSON
+
+source "$(dirname "$0")/../lib/logging.sh"
+
+# Usage function
+usage() {
+  warn "Usage: $0 -h <opensearch_host> -i <index_name> -d <index_json>"
+  echo ""
+  echo "Creates an index in OpenSearch if it doesn't exists."
+  echo ""
+  echo "Options:"
+  echo "  -h <opensearch_host>     The OpenSearch host URL (e.g., http://localhost:9200)"
+  echo "  -i <index_name>          The name of the index to create (e.g., events)"
+  echo "  -d <index_json>          The JSON payload as a string for index creation"
+  echo ""
+  echo "Example:"
+  echo "  $0 -h http://localhost:9200 -i events -d '{\"settings\": {\"number_of_shards\": 1}}'"
+  echo ""
+  exit 1
+}
+
+# Parse arguments
+while getopts "h:i:d:" opt; do
+  case ${opt} in
+    h ) OPENSEARCH_HOST=$OPTARG ;;
+    i ) INDEX_NAME=$OPTARG ;;
+    d ) INDEX_JSON=$OPTARG ;;
+    * ) usage ;;
+  esac
+done
+
+# Check required arguments
+if [ -z "$OPENSEARCH_HOST" ] || [ -z "$INDEX_NAME" ] || [ -z "$INDEX_JSON" ]; then
+  error "Error: All arguments are required."
+  usage
+fi
+
+# Check if index exists
+info "Checking if index '$INDEX_NAME' exists..."
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X HEAD "$OPENSEARCH_HOST/$INDEX_NAME")
+
+if [ "$HTTP_CODE" -eq 200 ]; then
+  success "Index '$INDEX_NAME' already exists. Skipping creation."
+  exit 0
+elif [ "$HTTP_CODE" -eq 404 ]; then
+  info "Index '$INDEX_NAME' does not exist. Creating it..."
+else
+  error "Unexpected response code: $HTTP_CODE"
+  exit 1
+fi
+
+# Create index
+CREATE_RESPONSE=$(curl -s -X PUT "$OPENSEARCH_HOST/${INDEX_NAME}" \
+  -H "Content-Type: application/json" \
+  -d "$INDEX_JSON")
+CURL_EXIT_CODE=$?
+
+if [ $CURL_EXIT_CODE -ne 0 ]; then
+  error "Error: Failed to create index. Curl exited with code $CURL_EXIT_CODE"
+  exit 1
+fi
+
+if echo "$CREATE_RESPONSE" | grep -q '"acknowledged":true'; then
+  success "Index '${INDEX_NAME}' created successfully."
+else
+  error "Failed to create index. Response: $CREATE_RESPONSE"
+  exit 1
+fi
