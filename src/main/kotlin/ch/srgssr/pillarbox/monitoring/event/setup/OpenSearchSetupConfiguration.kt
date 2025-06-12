@@ -5,6 +5,7 @@ import io.netty.channel.ChannelOption
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
+import org.springframework.web.reactive.function.client.ExchangeStrategies
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.netty.http.client.HttpClient
 
@@ -32,6 +33,14 @@ class OpenSearchSetupConfiguration {
       .builder()
       .baseUrl(properties.uri.toString())
       .clientConnector(ReactorClientHttpConnector(httpClient))
-      .build()
+      .exchangeStrategies(
+        ExchangeStrategies
+          .builder()
+          .codecs {
+            it.defaultCodecs().maxInMemorySize(
+              properties.maxInMemorySize.toBytes().toInt(),
+            )
+          }.build(),
+      ).build()
   }
 }
