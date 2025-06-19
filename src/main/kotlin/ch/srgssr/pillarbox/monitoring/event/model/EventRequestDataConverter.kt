@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.util.StdConverter
 internal class EventRequestDataConverter : StdConverter<EventRequest, EventRequest>() {
   private val processors =
     listOf(
+      DeviceNameProcessor(),
       UserAgentProcessor(),
       ContentRestrictionProcessor(),
       ErrorProcessor(),
