@@ -16,3 +16,11 @@ fun ResourceLoader.loadResourceContent(location: String): String {
   val resource = this.getResource(location)
   return resource.inputStream.bufferedReader().use { it.readText() }
 }
+
+fun <T> ResourceLoader.readLines(
+  location: String,
+  block: (Sequence<String>) -> T,
+): T {
+  val resource = this.getResource(location)
+  return resource.inputStream.bufferedReader().useLines(block)
+}
