@@ -110,4 +110,52 @@ class ErrorProcessorTest(
       val dataNode = eventRequest.data as Map<*, *>
       dataNode["error_type"] shouldBe null
     }
+
+    should("classify iOS errors correctly based on the predefined names") {
+      // Given: an input with a predefined error message
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "ERROR",
+          "timestamp": 1630000000000,
+          "user_ip": "127.0.0.1",
+          "version": 1,
+          "data": {
+            "name": "CoreMediaErrorDomain(1)"
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+
+      // Then: The error should be classified correctly
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["error_type"] shouldBe "PLAYBACK_MEDIA_SOURCE_ERROR"
+    }
+
+    should("not classify iOS errors is no name matches") {
+      // Given: an input with a predefined error message
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "ERROR",
+          "timestamp": 1630000000000,
+          "user_ip": "127.0.0.1",
+          "version": 1,
+          "data": {
+            "name": "CoreMediaErrorDomain(-1)"
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+
+      // Then: The error should be classified correctly
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["error_type"] shouldBe "UNKNOWN_ERROR"
+    }
   })
