@@ -23,10 +23,10 @@ internal class ErrorProcessor : DataProcessor {
    * @return The enriched data node with additional error classification.
    */
   override fun process(data: MutableMap<String, Any?>): MutableMap<String, Any?> {
-    data["error_type"] = listOf(
-      WebPlayerErrorType::find,
-      IOSPlayerErrorType::find,
-    ).firstNotNullOfOrNull { it(data) } ?: "UNKNOWN_ERROR"
+    data["error_type"] = WebPlayerErrorType.find(data)
+      ?: IOSPlayerErrorType.find(data)
+      ?: AndroidPlayerErrorType.find(data)
+      ?: "UNKNOWN_ERROR"
 
     return data
   }
@@ -72,6 +72,17 @@ internal enum class WebPlayerErrorType(
   val pattern = Regex(pattern)
 
   companion object {
+    /**
+     * Web player logs are ordered in chronological order, with the most recent entries last.
+     * The root cause of an error typically appears at the end of the log.
+     *
+     * This function scans the log for known error patterns and selects the one that occurs
+     * furthest down the log. This is considered the most likely cause of the error.
+     *
+     * @param data A map containing log information, expected to include a "log" key with the log content.
+     *
+     * @return The name of the matched error type, or null if no match is found.
+     */
     fun find(data: MutableMap<String, Any?>): String? =
       (data["log"] as? String)?.let { log ->
         WebPlayerErrorType.entries
@@ -116,6 +127,16 @@ internal enum class IOSPlayerErrorType(
   ;
 
   companion object {
+    /**
+     * Apple player errors are categorized directly by their `name` field, which indicates the type of failure.
+     *
+     * This function trims and compares the provided `name` against a list of known error type aliases.
+     * The first matching type (case-insensitive) is returned.
+     *
+     * @param data A map expected to contain a "name" key corresponding to the iOS error identifier.
+     *
+     * @return The name of the matched error type, or null if no match is found.
+     */
     fun find(data: MutableMap<String, Any?>): String? =
       (data["name"] as? String)?.let { rawName ->
         val name = rawName.trim()
@@ -124,5 +145,69 @@ internal enum class IOSPlayerErrorType(
             type.matches.any { it.equals(name, true) }
           }?.name
       }
+  }
+}
+
+/**
+ * Enum representing various error categories for the Android player.
+ */
+internal enum class AndroidPlayerErrorType(
+  pattern: String,
+  vararg val names: String,
+) {
+  /**
+   * Failure to decrypt or decode DRM-protected content.
+   */
+  DRM_ERROR("drm"),
+
+  /**
+   * Failure when calling the Integration Layer API.
+   */
+  IL_ERROR("SRGAssetLoader\\.loadAsset", "HttpResultException", "IOException"),
+
+  /**
+   * The media format is not supported on the current device or browser.
+   */
+  PLAYBACK_UNSUPPORTED_MEDIA("SRGAssetLoader\\.loadAsset", "ResourceNotFoundException"),
+
+  /**
+   * A network error occurred during playback.
+   */
+  PLAYBACK_NETWORK_ERROR("^androidx\\.media3\\.exoplayer\\..*timeout"),
+
+  /**
+   * Error loading or decoding the media resource.
+   */
+  PLAYBACK_MEDIA_SOURCE_ERROR("^androidx\\.media3\\.exoplayer\\.(?!.*timeout)"),
+  ;
+
+  val pattern = Regex(pattern)
+
+  companion object {
+    /**
+     * Attempts to determine the type of error from the provided log data.
+     *
+     * This function inspects both the "log" and "name" fields in the provided data.
+     *
+     * It returns the first matching error type based on:
+     * - Whether the log content matches the enum's pattern.
+     * - (Optional) Whether the error name matches any of the expected names for the enum.
+     *
+     * The search respects the order of declaration in the enum. This ensures that
+     * more specific errors are prioritized over generic fallback patterns.
+     *
+     * @param data A map expected to contain a "log" string and optionally a "name".
+     *
+     * @return The name of the matched error type, or null if no match is found.
+     */
+    fun find(data: MutableMap<String, Any?>): String? =
+      (data["log"] as? String)
+        ?.let { log ->
+          val name = data["name"] as? String ?: ""
+          AndroidPlayerErrorType.entries.firstOrNull { type ->
+            (type.names.isEmpty() || type.names.any { it.equals(name, true) }) &&
+              type.pattern.containsMatchIn(log)
+          }
+        }?.name
   }
 }
