@@ -2,14 +2,14 @@ import org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN
 import java.util.Properties
 
 plugins {
-  kotlin("jvm") version "2.0.10"
-  kotlin("plugin.spring") version "2.0.10"
-  id("org.springframework.boot") version "3.4.1"
+  kotlin("jvm") version "2.0.21"
+  kotlin("plugin.spring") version "2.0.21"
+  id("org.springframework.boot") version "3.5.3"
   id("io.spring.dependency-management") version "1.1.7"
-  id("io.gitlab.arturbosch.detekt") version "1.23.7"
-  id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
+  id("io.gitlab.arturbosch.detekt") version "1.23.8"
+  id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
   id("org.jetbrains.kotlinx.kover") version "0.9.1"
-  id("com.github.ben-manes.versions") version "0.51.0"
+  id("com.github.ben-manes.versions") version "0.52.0"
 }
 
 group = "ch.srgssr.pillarbox"
@@ -29,7 +29,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
-  implementation("nl.basjes.parse.useragent:yauaa:7.29.0")
+  implementation("nl.basjes.parse.useragent:yauaa:7.31.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
@@ -38,7 +38,7 @@ dependencies {
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("io.kotest.extensions:kotest-extensions-spring:1.3.0")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-  testImplementation("io.mockk:mockk:1.13.13")
+  testImplementation("io.mockk:mockk:1.14.5")
   testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
   testImplementation("com.squareup.okhttp3:okhttp:4.12.0")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -51,14 +51,14 @@ kotlin {
 }
 
 detekt {
-  toolVersion = "1.23.7"
+  toolVersion = "1.23.8"
   buildUponDefaultConfig = true
   allRules = false
   config.setFrom("$projectDir/detekt.yml")
 }
 
 ktlint {
-  version.set("1.3.1")
+  version.set("1.6.0")
   debug.set(false)
   android.set(false)
   outputToConsole.set(true)
