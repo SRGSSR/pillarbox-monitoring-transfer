@@ -1,14 +1,18 @@
 # First stage: Build native image with GraalVM
-FROM gradle:8.10-jdk22-alpine AS build
+FROM eclipse-temurin:22-jdk-alpine AS build
 
 WORKDIR /app
+
+COPY gradlew .
+COPY gradle/ gradle/
 COPY gradle.properties .
 COPY build.gradle.kts .
 COPY src ./src
-RUN gradle clean build -x test -x check
+
+RUN ./gradlew clean build -x test -x check
 
 # Second stage: Slim runtime image with optimized settings
-FROM eclipse-temurin:22-jre-alpine
+FROM eclipse-temurin:24-jre-alpine
 VOLUME /tmp
 
 # Copy the built JAR file from the build stage
