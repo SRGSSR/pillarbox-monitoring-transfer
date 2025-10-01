@@ -37,7 +37,13 @@ internal class ErrorProcessor : DataProcessor {
  */
 internal enum class WebPlayerErrorType(
   pattern: String,
+  val priority: Int = 0,
 ) {
+  /**
+   * The user experienced a connection problem to the remote API or the media resource.
+   */
+  CONNECTION_ERROR("\"httpStatusCode\"\\s*:\\s*418", 10),
+
   /**
    * Failure when calling the Integration Layer API.
    */
@@ -79,6 +85,11 @@ internal enum class WebPlayerErrorType(
      * This function scans the log for known error patterns and selects the one that occurs
      * furthest down the log. This is considered the most likely cause of the error.
      *
+     * In addition, each error type has an assigned priority weight. When multiple error
+     * patterns match, the function first compares their priorities: higher priority errors
+     * always take precedence over lower priority ones. If two errors share the same priority,
+     * the one that occurs furthest down the log is chosen.
+     *
      * @param data A map containing log information, expected to include a "log" key with the log content.
      *
      * @return The name of the matched error type, or null if no match is found.
@@ -93,8 +104,10 @@ internal enum class WebPlayerErrorType(
               ?.range
               ?.first
               ?.let { index -> type to index }
-          }.maxByOrNull { it.second }
-          ?.first
+          }.maxWithOrNull(
+            compareBy<Pair<WebPlayerErrorType, Int>>
+              { it.first.priority }.thenBy { it.second },
+          )?.first
           ?.name
       }
   }
