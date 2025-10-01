@@ -207,4 +207,52 @@ class ErrorProcessorTest(
       val dataNode = eventRequest.data as Map<*, *>
       dataNode["error_type"] shouldBe "IL_ERROR"
     }
+
+    should("distinguish between CONNECTION_ERROR and IL_ERROR") {
+      // Given: an input with a predefined error message
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "ERROR",
+          "timestamp": 1630000000000,
+          "user_ip": "127.0.0.1",
+          "version": 1,
+          "data": {
+            "log": "ERROR: Received \"httpStatusCode\": 418, on il.srgssr.ch"
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+
+      // Then: The error should be classified correctly
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["error_type"] shouldBe "CONNECTION_ERROR"
+    }
+
+    should("Classify IL_ERROR correctly") {
+      // Given: an input with a predefined error message
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "ERROR",
+          "timestamp": 1630000000000,
+          "user_ip": "127.0.0.1",
+          "version": 1,
+          "data": {
+            "log": "ERROR: Received 404 on il.srgssr.ch"
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+
+      // Then: The error should be classified correctly
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["error_type"] shouldBe "IL_ERROR"
+    }
   })
