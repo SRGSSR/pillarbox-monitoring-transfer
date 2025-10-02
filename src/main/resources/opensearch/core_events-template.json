@@ -15,12 +15,12 @@
       "properties": {
         "session_id": {
           "type": "keyword",
-          "ignore_above": 256,
-          "eager_global_ordinals": true
+          "ignore_above": 256
         },
         "event_name": {
           "type": "keyword",
-          "ignore_above": 256
+          "ignore_above": 256,
+          "eager_global_ordinals": true
         },
         "user_ip": {
           "type": "keyword",
@@ -62,11 +62,13 @@
             },
             "error_type": {
               "type": "keyword",
-              "ignore_above": 256
+              "ignore_above": 256,
+              "eager_global_ordinals": true
             },
             "block_reason": {
               "type": "keyword",
-              "ignore_above": 256
+              "ignore_above": 256,
+              "eager_global_ordinals": true
             },
             "business_error": {
               "type": "boolean"
@@ -125,7 +127,8 @@
               "properties": {
                 "name": {
                   "type": "keyword",
-                  "ignore_above": 256
+                  "ignore_above": 256,
+                  "eager_global_ordinals": true
                 },
                 "user_agent": {
                   "type": "keyword",
@@ -149,7 +152,8 @@
                 },
                 "type": {
                   "type": "keyword",
-                  "ignore_above": 256
+                  "ignore_above": 256,
+                  "eager_global_ordinals": true
                 }
               }
             },
@@ -161,8 +165,7 @@
                 },
                 "id": {
                   "type": "keyword",
-                  "ignore_above": 256,
-                  "eager_global_ordinals": true
+                  "ignore_above": 256
                 },
                 "metadata_url": {
                   "type": "keyword",
@@ -178,7 +181,8 @@
               "properties": {
                 "name": {
                   "type": "keyword",
-                  "ignore_above": 256
+                  "ignore_above": 256,
+                  "eager_global_ordinals": true
                 },
                 "version": {
                   "type": "keyword",
@@ -190,15 +194,18 @@
               "properties": {
                 "name": {
                   "type": "keyword",
-                  "ignore_above": 256
+                  "ignore_above": 256,
+                  "eager_global_ordinals": true
                 },
                 "platform": {
                   "type": "keyword",
-                  "ignore_above": 256
+                  "ignore_above": 256,
+                  "eager_global_ordinals": true
                 },
                 "version": {
                   "type": "keyword",
-                  "ignore_above": 256
+                  "ignore_above": 256,
+                  "eager_global_ordinals": true
                 }
               }
             },
