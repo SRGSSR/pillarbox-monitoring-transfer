@@ -7,7 +7,8 @@
         "filter": {
           "bool": {
             "must_not": [
-              { "term": { "session.robot": true } }
+              { "term": { "session.robot": true } },
+              { "term": { "session.embed": true } }
             ]
           }
         }
@@ -20,7 +21,8 @@
         "filter": {
           "bool": {
             "must_not": [
-              { "term": { "session.robot": true } }
+              { "term": { "session.robot": true } },
+              { "term": { "session.embed": true } }
             ]
           }
         }

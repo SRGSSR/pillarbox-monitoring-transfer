@@ -231,6 +231,9 @@
             "robot": {
               "type": "boolean"
             },
+            "embed": {
+              "type": "boolean"
+            },
             "screen": {
               "properties": {
                 "height": {
