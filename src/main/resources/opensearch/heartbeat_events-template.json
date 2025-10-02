@@ -150,6 +150,10 @@
                 "origin": {
                   "type": "keyword",
                   "ignore_above": 256
+                },
+                "short_origin": {
+                  "type": "keyword",
+                  "ignore_above": 256
                 }
               }
             },
