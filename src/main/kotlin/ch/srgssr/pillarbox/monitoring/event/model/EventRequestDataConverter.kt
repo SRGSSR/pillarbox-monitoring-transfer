@@ -17,6 +17,7 @@ internal class EventRequestDataConverter : StdConverter<EventRequest, EventReque
     listOf(
       DeviceNameProcessor(),
       UserAgentProcessor(),
+      OriginProcessor(),
       ContentRestrictionProcessor(),
       ErrorProcessor(),
       ClampingNumberDataProcessor(),
