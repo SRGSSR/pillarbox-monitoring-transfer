@@ -38,7 +38,7 @@ class OriginProcessorTest(
       dataNode["embed"] shouldBe true
     }
 
-    should("detect not flag an event as embedded if it comes from a non embedded origin") {
+    should("not flag an event as embedded if it comes from a non embedded origin") {
       // Given: an input with a user agent
       val jsonInput =
         """
@@ -50,7 +50,7 @@ class OriginProcessorTest(
           "version": 1,
           "data": {
             "media": {
-              "origin": "https://www.rts.ch/live?rts1"
+              "origin": "https://www.rts.ch/info?urn=urn:rts:video:1234"
             }
           }
         }
@@ -64,7 +64,44 @@ class OriginProcessorTest(
       dataNode["embed"] shouldBe false
     }
 
-    should("detect not add the flag if the media origin is no present") {
+    context("Short origin resolver") {
+      val testCases =
+        listOf(
+          "https://www.rts.ch/info/news" to "www.rts.ch/info",
+          "https://www.srf.ch/?urn=urn:srf:video:1234" to "www.srf.ch",
+          "http://www.rsi.ch/cultura" to "www.rsi.ch/cultura",
+          "Not a URL" to null,
+          "" to null,
+        )
+
+      testCases.forEach { (origin, expectedShortOrigin) ->
+        should("resolve $origin to $expectedShortOrigin") {
+          val jsonInput =
+            """
+            {
+              "session_id": "12345",
+              "event_name": "START",
+              "timestamp": 1630000000000,
+              "user_ip": "127.0.0.1",
+              "version": 1,
+              "data": {
+                "media": {
+                  "origin": "$origin"
+                }
+              }
+            }
+            """.trimIndent()
+
+          // When: the event is deserialized
+          val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+          val dataNode = eventRequest.data as Map<*, *>
+          val mediaNode = dataNode["media"] as Map<*, *>
+          mediaNode["short_origin"] shouldBe expectedShortOrigin
+        }
+      }
+    }
+
+    should("not add the flag if the media origin is no present") {
       // Given: an input with a user agent
       val jsonInput =
         """
