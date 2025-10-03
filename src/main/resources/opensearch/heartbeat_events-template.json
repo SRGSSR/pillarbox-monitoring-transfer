@@ -154,6 +154,19 @@
                 "short_origin": {
                   "type": "keyword",
                   "ignore_above": 256
+                },
+                "bu": {
+                  "type": "keyword",
+                  "ignore_above": 256,
+                  "eager_global_ordinals": true
+                },
+                "type": {
+                  "type": "keyword",
+                  "ignore_above": 256,
+                  "eager_global_ordinals": true
+                },
+                "swisstxt": {
+                  "type": "boolean"
                 }
               }
             },
