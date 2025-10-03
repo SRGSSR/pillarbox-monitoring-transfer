@@ -18,6 +18,7 @@ internal class EventRequestDataConverter : StdConverter<EventRequest, EventReque
       DeviceNameProcessor(),
       UserAgentProcessor(),
       OriginProcessor(),
+      MediaIdProcessor(),
       ContentRestrictionProcessor(),
       ErrorProcessor(),
       ClampingNumberDataProcessor(),
