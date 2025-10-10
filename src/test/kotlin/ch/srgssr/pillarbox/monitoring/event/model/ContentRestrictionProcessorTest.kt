@@ -37,6 +37,31 @@ class ContentRestrictionProcessorTest(
       dataNode["business_error"] shouldBe true
     }
 
+    should("classify error messages correctly if it contains one of the predefined content restrictions") {
+      // Given: an input with a predefined error message
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "ERROR",
+          "timestamp": 1630000000000,
+          "user_ip": "127.0.0.1",
+          "version": 1,
+          "data": {
+            "message": "Der Vorgang konnte nicht abgeschlossen werden. (PillarboxCoreBusiness.DataError-Fehler 1 - Dieser Inhalt ist noch nicht verfügbar.)"
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+
+      // Then: The error should be classified correctly
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["block_reason"] shouldBe "STARTDATE"
+      dataNode["business_error"] shouldBe true
+    }
+
     should("flag the error as not a business error if it doesn't match a predefined content restriction") {
       // Given: an input with a non predefined error message
       val jsonInput =
