@@ -5,8 +5,8 @@
   "priority": 100,
   "template": {
     "settings": {
-      "number_of_shards": 3,
-      "number_of_replicas": 1,
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
       "refresh_interval": "60s",
       "plugins.index_state_management.rollover_alias": "core_events"
     },
