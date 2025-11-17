@@ -19,18 +19,25 @@ internal class ClampingNumberDataProcessor : DataProcessor {
   @Suppress("UNCHECKED_CAST")
   private fun clampNode(node: Any?): Any? =
     when (node) {
-      is MutableMap<*, *> ->
+      is MutableMap<*, *> -> {
         (node as? MutableMap<String, Any?>)?.let { data ->
           data.mapValuesInPlace { clampNode(it) }
         }
+      }
 
-      is List<*> ->
+      is List<*> -> {
         (node as? MutableList<Any?>)?.let { data ->
           data.mapInPlace { clampNode(it) }
         }
+      }
 
-      is BigInteger -> node.coerceIn(MIN_LONG_AS_BIGINT, MAX_LONG_AS_BIGINT).toLong()
-      else -> node
+      is BigInteger -> {
+        node.coerceIn(MIN_LONG_AS_BIGINT, MAX_LONG_AS_BIGINT).toLong()
+      }
+
+      else -> {
+        node
+      }
     }
 
   override fun process(data: MutableMap<String, Any?>): MutableMap<String, Any?> =

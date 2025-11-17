@@ -16,18 +16,18 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
  */
 @JsonDeserialize(converter = EventRequestDataConverter::class)
 data class EventRequest(
-  @JsonProperty("session_id", required = true)
-  var sessionId: String,
-  @JsonProperty("event_name", required = true)
-  var eventName: String,
-  @JsonAlias("timestamp")
-  @JsonProperty("@timestamp")
-  var timestamp: Long,
-  @JsonProperty("user_ip")
-  var ip: String?,
-  @JsonProperty(required = true)
-  var version: Long,
-  @JsonProperty(required = true)
+  @param:JsonProperty("session_id", required = true)
+  val sessionId: String,
+  @param:JsonProperty("event_name", required = true)
+  val eventName: String,
+  @param:JsonAlias("timestamp")
+  @param:JsonProperty("@timestamp")
+  val timestamp: Long,
+  @param:JsonProperty("user_ip")
+  val ip: String?,
+  @param:JsonProperty(required = true)
+  val version: Long,
+  @param:JsonProperty(required = true)
   var data: Any,
   var session: Any?,
 )

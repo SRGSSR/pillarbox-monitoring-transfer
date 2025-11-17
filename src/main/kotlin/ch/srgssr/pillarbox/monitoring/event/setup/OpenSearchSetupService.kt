@@ -21,7 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient
  */
 @Service
 class OpenSearchSetupService(
-  @Qualifier("openSearchWebClient")
+  @param:Qualifier("openSearchWebClient")
   private val webClient: WebClient,
   private val tasks: List<OpenSearchSetupTask>,
   private val properties: OpenSearchConfigurationProperties,

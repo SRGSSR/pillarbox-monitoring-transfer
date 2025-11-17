@@ -20,7 +20,7 @@ import org.springframework.web.reactive.function.client.WebClient
  */
 @Component
 class EventRepository(
-  @Qualifier("openSearchWebClient")
+  @param:Qualifier("openSearchWebClient")
   private val webClient: WebClient,
   private val objectMapper: ObjectMapper,
 ) {

@@ -2,21 +2,21 @@ import org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN
 import java.util.Properties
 
 plugins {
-  kotlin("jvm") version "2.0.21"
-  kotlin("plugin.spring") version "2.0.21"
-  id("org.springframework.boot") version "3.5.3"
+  kotlin("jvm") version "2.2.21"
+  kotlin("plugin.spring") version "2.2.21"
+  id("org.springframework.boot") version "3.5.7"
   id("io.spring.dependency-management") version "1.1.7"
-  id("io.gitlab.arturbosch.detekt") version "1.23.8"
-  id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
-  id("org.jetbrains.kotlinx.kover") version "0.9.1"
-  id("com.github.ben-manes.versions") version "0.52.0"
+  id("dev.detekt") version ("2.0.0-alpha.1")
+  id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
+  id("org.jetbrains.kotlinx.kover") version "0.9.3"
+  id("com.github.ben-manes.versions") version "0.53.0"
 }
 
 group = "ch.srgssr.pillarbox"
 
 java {
   toolchain {
-    languageVersion = JavaLanguageVersion.of(22)
+    languageVersion = JavaLanguageVersion.of(23)
   }
 }
 
@@ -29,7 +29,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
-  implementation("nl.basjes.parse.useragent:yauaa:7.31.0")
+  implementation("nl.basjes.parse.useragent:yauaa:7.32.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
@@ -38,9 +38,9 @@ dependencies {
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("io.kotest.extensions:kotest-extensions-spring:1.3.0")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-  testImplementation("io.mockk:mockk:1.14.5")
-  testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-  testImplementation("com.squareup.okhttp3:okhttp:4.12.0")
+  testImplementation("io.mockk:mockk:1.14.6")
+  testImplementation("com.squareup.okhttp3:mockwebserver:5.3.1")
+  testImplementation("com.squareup.okhttp3:okhttp:5.3.1")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -51,14 +51,14 @@ kotlin {
 }
 
 detekt {
-  toolVersion = "1.23.8"
+  toolVersion = "2.0.0-alpha.1"
   buildUponDefaultConfig = true
   allRules = false
   config.setFrom("$projectDir/detekt.yml")
 }
 
 ktlint {
-  version.set("1.6.0")
+  version.set("1.8.0")
   debug.set(false)
   android.set(false)
   outputToConsole.set(true)
@@ -107,3 +107,16 @@ val updateVersion by tasks.registering {
 tasks.register("release") {
   dependsOn("build", updateVersion)
 }
+
+configurations
+  .matching { it.name.contains("detekt", ignoreCase = true) }
+  .configureEach {
+    resolutionStrategy.eachDependency {
+      if (requested.group == "org.jetbrains.kotlin") {
+        useVersion(
+          dev.detekt.gradle.plugin
+            .getSupportedKotlinVersion(),
+        )
+      }
+    }
+  }

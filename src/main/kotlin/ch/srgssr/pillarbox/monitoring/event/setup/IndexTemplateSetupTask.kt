@@ -25,7 +25,7 @@ import reactor.core.publisher.Mono
 @Component
 @Order(2)
 class IndexTemplateSetupTask(
-  @Qualifier("openSearchWebClient")
+  @param:Qualifier("openSearchWebClient")
   private val webClient: WebClient,
   private val resourceLoader: ResourcePatternResolver,
 ) : OpenSearchSetupTask {

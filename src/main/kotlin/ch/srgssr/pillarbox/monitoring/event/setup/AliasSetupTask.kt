@@ -27,7 +27,7 @@ import reactor.core.publisher.Mono
 @Component
 @Order(4)
 class AliasSetupTask(
-  @Qualifier("openSearchWebClient")
+  @param:Qualifier("openSearchWebClient")
   private val webClient: WebClient,
   private val resourceLoader: ResourcePatternResolver,
 ) : OpenSearchSetupTask {
