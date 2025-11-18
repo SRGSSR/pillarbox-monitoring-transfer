@@ -5,6 +5,7 @@ import ch.srgssr.pillarbox.monitoring.benchmark.timed
 import ch.srgssr.pillarbox.monitoring.cache.LRUCache
 import ch.srgssr.pillarbox.monitoring.event.model.EventRequest
 import ch.srgssr.pillarbox.monitoring.event.repository.EventRepository
+import ch.srgssr.pillarbox.monitoring.exception.HttpClientException
 import ch.srgssr.pillarbox.monitoring.flow.chunked
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
@@ -18,7 +19,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 
 /**
  * Service responsible for consuming events from a remote event dispatcher service via Server-Sent Events (SSE),
@@ -98,13 +98,8 @@ class EventDispatcherClient(
       timed("EventRepository.saveEvents") {
         eventRepository.saveAll(events)
       }
-    } catch (e: WebClientResponseException) {
-      logger.error(
-        "A connection error occurred while saving the current batch " +
-          "| [Status Code: ${e.statusCode.value()}] " +
-          "| [Body: ${e.responseBodyAsString}]",
-        e,
-      )
+    } catch (e: HttpClientException) {
+      logger.error("An connection error occurred while saving the current batch", e)
     } catch (e: Exception) {
       logger.error("An unexpected error occurred while saving the current batch", e)
     }

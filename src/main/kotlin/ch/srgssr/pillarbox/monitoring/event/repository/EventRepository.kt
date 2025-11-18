@@ -1,27 +1,30 @@
 package ch.srgssr.pillarbox.monitoring.event.repository
 
 import ch.srgssr.pillarbox.monitoring.event.model.EventRequest
+import ch.srgssr.pillarbox.monitoring.io.onSuccess
+import ch.srgssr.pillarbox.monitoring.io.throwOnNotSuccess
 import ch.srgssr.pillarbox.monitoring.log.debug
 import ch.srgssr.pillarbox.monitoring.log.error
 import ch.srgssr.pillarbox.monitoring.log.logger
 import com.fasterxml.jackson.databind.ObjectMapper
-import kotlinx.coroutines.reactor.awaitSingleOrNull
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.request.url
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClient
 
 /**
  * Repository responsible for sending event data to OpenSearch using the bulk API.
  *
- * @property webClient The [WebClient] configured to connect to the OpenSearch instance.
+ * @property httpClient The [HttpClient] configured to connect to the OpenSearch instance.
  * @property objectMapper Jackson's [ObjectMapper] used to serialize event objects.
  */
 @Component
 class EventRepository(
-  @param:Qualifier("openSearchWebClient")
-  private val webClient: WebClient,
+  @param:Qualifier("openSearchHttpClient")
+  private val httpClient: HttpClient,
   private val objectMapper: ObjectMapper,
 ) {
   private companion object {
@@ -43,15 +46,12 @@ class EventRepository(
    * @param events A list of events to be indexed.
    */
   suspend fun saveAll(events: List<EventRequest>) {
-    webClient
-      .post()
-      .uri("/_bulk")
-      .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-      .bodyValue(toNDJson(events))
-      .retrieve()
-      .bodyToMono(String::class.java)
-      .awaitSingleOrNull()
-      ?.let { responseStr ->
+    httpClient
+      .post {
+        url("/_bulk")
+        setBody(toNDJson(events))
+      }.onSuccess {
+        val responseStr = body<String>()
         logger.debug { "Bulk response: $responseStr " }
 
         val response = objectMapper.readTree(responseStr)
@@ -67,7 +67,7 @@ class EventRepository(
               }
             }
         }
-      }
+      }.throwOnNotSuccess { "Connection error" }
   }
 
   /**

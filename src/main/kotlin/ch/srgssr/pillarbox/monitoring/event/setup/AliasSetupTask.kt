@@ -1,19 +1,22 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
+import ch.srgssr.pillarbox.monitoring.io.is4xxClientError
 import ch.srgssr.pillarbox.monitoring.io.loadResourceContent
-import ch.srgssr.pillarbox.monitoring.log.error
+import ch.srgssr.pillarbox.monitoring.io.onStatus
+import ch.srgssr.pillarbox.monitoring.io.onSuccess
+import ch.srgssr.pillarbox.monitoring.io.throwOnNotSuccess
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
-import kotlinx.coroutines.reactor.awaitSingleOrNull
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.request.url
+import io.ktor.http.HttpStatusCode
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.annotation.Order
 import org.springframework.core.io.support.ResourcePatternResolver
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatusCode
-import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Mono
 
 /**
  * Task responsible for setting up a filtered alias in OpenSearch.
@@ -21,14 +24,14 @@ import reactor.core.publisher.Mono
  * This task checks if the specified alias exists in OpenSearch. If it does not, it loads the alias
  * configuration from `resources/opensearch/user_events-alias.json` and creates it.
  *
- * @property webClient WebClient instance used to interact with the OpenSearch API.
+ * @property httpClient [HttpClient] instance used to interact with the OpenSearch API.
  * @property resourceLoader Resource loader used to access the alias configuration JSON file.
  */
 @Component
 @Order(4)
 class AliasSetupTask(
-  @param:Qualifier("openSearchWebClient")
-  private val webClient: WebClient,
+  @param:Qualifier("openSearchHttpClient")
+  private val httpClient: HttpClient,
   private val resourceLoader: ResourcePatternResolver,
 ) : OpenSearchSetupTask {
   private companion object {
@@ -52,33 +55,23 @@ class AliasSetupTask(
     for (resource in resources) {
       val filename = resource.filename ?: continue
       val aliasName = filename.removeSuffix("-alias.json")
-      checkAndCreateAlias(aliasName).awaitSingleOrNull()
+      checkAndCreateAlias(aliasName)
     }
   }
 
-  private fun checkAndCreateAlias(aliasName: String): Mono<*> =
-    webClient
-      .get()
-      .uri("/_alias/$aliasName")
-      .retrieve()
+  private suspend fun checkAndCreateAlias(aliasName: String) =
+    httpClient
+      .get("/_alias/$aliasName")
       .onStatus(HttpStatusCode::is4xxClientError) {
-        logger.info { "Alias '$aliasName' does not exist, creating alias..." }
-        createAlias(aliasName).then(Mono.empty())
-      }.onStatus(HttpStatusCode::is2xxSuccessful) {
         logger.info { "Alias '$aliasName' already exists, skipping creation." }
-        Mono.empty()
-      }.toBodilessEntity()
+        createAlias(aliasName)
+      }.onSuccess { logger.info { "Alias '$aliasName' does not exist, creating alias..." } }
 
-  private fun createAlias(aliasName: String): Mono<*> {
-    val indexTemplateJson = resourceLoader.loadResourceContent("classpath:opensearch/$aliasName-alias.json")
-    return webClient
-      .post()
-      .uri("/_aliases")
-      .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-      .bodyValue(indexTemplateJson)
-      .retrieve()
-      .toBodilessEntity()
-      .doOnSuccess { logger.info { "Alias '$aliasName' created successfully" } }
-      .doOnError { e -> logger.error { "Failed to create alias '$aliasName': ${e.message}" } }
-  }
+  private suspend fun createAlias(aliasName: String) =
+    httpClient
+      .post {
+        url("/_aliases")
+        setBody(resourceLoader.loadResourceContent("classpath:opensearch/$aliasName-alias.json"))
+      }.onSuccess { logger.info { "Alias '$aliasName' created successfully" } }
+      .throwOnNotSuccess { "Failed to create alias '$aliasName'" }
 }

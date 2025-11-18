@@ -1,12 +1,18 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
 import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
+import ch.srgssr.pillarbox.monitoring.io.onSuccess
+import ch.srgssr.pillarbox.monitoring.io.throwOnNotSuccess
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
-import kotlinx.coroutines.reactor.awaitSingleOrNull
+import ch.srgssr.pillarbox.monitoring.log.warn
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.retryWhen
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
 
 /**
  * Service responsible for setting up the OpenSearch environment and ensuring
@@ -15,14 +21,14 @@ import org.springframework.web.reactive.function.client.WebClient
  *
  * Discovers all [OpenSearchSetupTask] in the context and executes them sequentially.
  *
- * @property webClient The web client instance configured for OpenSearch.
+ * @property httpClient HttpClient instance used to interact with the OpenSearch API.
  * @property tasks The list of setup tasks that must be executed to prepare the OpenSearch environment.
  * @property properties OpenSearch configuration properties including the URI and retry settings.
  */
 @Service
 class OpenSearchSetupService(
-  @param:Qualifier("openSearchWebClient")
-  private val webClient: WebClient,
+  @param:Qualifier("openSearchHttpClient")
+  private val httpClient: HttpClient,
   private val tasks: List<OpenSearchSetupTask>,
   private val properties: OpenSearchConfigurationProperties,
 ) {
@@ -47,17 +53,22 @@ class OpenSearchSetupService(
   }
 
   private suspend fun checkOpenSearchHealth() {
-    webClient
-      .get()
-      .uri("/")
-      .retrieve()
-      .toBodilessEntity()
-      .retryWhen(
-        properties.retry.create().doBeforeRetry {
-          logger.info("Retrying OpenSearch health check...")
+    flow {
+      emit(
+        httpClient
+          .get("/")
+          .onSuccess { logger.info("OpenSearch is healthy, proceeding with setup...") }
+          .throwOnNotSuccess { "Connection error while checking OpenSearch health" },
+      )
+    }.retryWhen(
+      properties.retry.toRetryWhen(
+        onRetry = { cause, attempt, delayMillis ->
+          logger.warn(cause) {
+            "Retrying after failure: ${cause.message}. Attempt ${attempt + 1}. Waiting for ${delayMillis}ms"
+          }
         },
-      ).doOnSuccess { logger.info("OpenSearch is healthy, proceeding with setup...") }
-      .awaitSingleOrNull()
+      ),
+    ).collect()
   }
 
   private suspend fun runSetupTasks() {

@@ -1,18 +1,21 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
+import ch.srgssr.pillarbox.monitoring.io.is4xxClientError
 import ch.srgssr.pillarbox.monitoring.io.loadResourceContent
-import ch.srgssr.pillarbox.monitoring.log.error
+import ch.srgssr.pillarbox.monitoring.io.onStatus
+import ch.srgssr.pillarbox.monitoring.io.onSuccess
+import ch.srgssr.pillarbox.monitoring.io.throwOnNotSuccess
+import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
-import kotlinx.coroutines.reactor.awaitSingleOrNull
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.client.request.url
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.annotation.Order
 import org.springframework.core.io.support.ResourcePatternResolver
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatusCode
-import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Mono
 
 /**
  * Task responsible for setting up the Index State Management (ISM) policy in OpenSearch.
@@ -20,14 +23,14 @@ import reactor.core.publisher.Mono
  * This task checks if the ISM policy already exists in OpenSearch. If it does not, it loads
  * the ISM policy configuration from `resources/opensearch/heartbeat_events-policy.json`.
  *
- * @property webClient WebClient instance for interacting with the OpenSearch API.
+ * @property httpClient HttpClient instance used to interact with the OpenSearch API.
  * @property resourceLoader Resource loader for accessing the ISM policy configuration file.
  */
 @Component
 @Order(1)
 class ISMPolicySetupTask(
-  @param:Qualifier("openSearchWebClient")
-  private val webClient: WebClient,
+  @param:Qualifier("openSearchHttpClient")
+  private val httpClient: HttpClient,
   private val resourceLoader: ResourcePatternResolver,
 ) : OpenSearchSetupTask {
   private companion object {
@@ -51,34 +54,26 @@ class ISMPolicySetupTask(
     for (resource in resources) {
       val filename = resource.filename ?: continue
       val policyName = filename.removeSuffix("-policy.json")
-      checkAndApplyISMPolicy(policyName).awaitSingleOrNull()
+      checkAndApplyISMPolicy(policyName)
     }
   }
 
-  private fun checkAndApplyISMPolicy(policyName: String): Mono<*> =
-    webClient
-      .get()
-      .uri("/_plugins/_ism/policies/${policyName}_policy")
-      .retrieve()
-      .onStatus(HttpStatusCode::is4xxClientError) {
-        logger.info("ISM policy '${policyName}_policy' does not exist, creating new ISM policy...")
-        applyISMPolicy(policyName).then(Mono.empty())
-      }.onStatus(HttpStatusCode::is2xxSuccessful) {
-        logger.info("ISM policy '${policyName}_policy' already exists, skipping creation.")
-        Mono.empty()
-      }.toBodilessEntity()
+  private suspend fun checkAndApplyISMPolicy(policyName: String) =
+    httpClient
+      .get("/_plugins/_ism/policies/${policyName}_policy")
+      .onStatus(io.ktor.http.HttpStatusCode::is4xxClientError) {
+        logger.info { "ISM policy '${policyName}_policy' does not exist, creating new ISM policy..." }
+        applyISMPolicy(policyName)
+      }.onSuccess {
+        logger.info { "ISM policy '${policyName}_policy' already exists, skipping creation." }
+      }
 
-  private fun applyISMPolicy(policyName: String): Mono<*> {
-    val ismPolicyJson = resourceLoader.loadResourceContent("classpath:opensearch/$policyName-policy.json")
-
-    return webClient
-      .put()
-      .uri("/_plugins/_ism/policies/${policyName}_policy")
-      .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-      .bodyValue(ismPolicyJson)
-      .retrieve()
-      .toBodilessEntity()
-      .doOnSuccess { logger.info("ISM Policy '${policyName}_policy' applied successfully") }
-      .doOnError { e -> logger.error { "Failed to apply ISM Policy '${policyName}_policy': ${e.message}" } }
-  }
+  private suspend fun applyISMPolicy(policyName: String) =
+    httpClient
+      .put {
+        url("/_plugins/_ism/policies/${policyName}_policy")
+        setBody(resourceLoader.loadResourceContent("classpath:opensearch/$policyName-policy.json"))
+      }.onSuccess {
+        logger.info { "ISM Policy '${policyName}_policy' applied successfully" }
+      }.throwOnNotSuccess { "Failed to apply ISM Policy '${policyName}_policy'" }
 }

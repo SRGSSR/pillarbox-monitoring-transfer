@@ -2,8 +2,6 @@ package ch.srgssr.pillarbox.monitoring.event.config
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.FlowCollector
-import reactor.util.retry.Retry
-import reactor.util.retry.RetryBackoffSpec
 import java.time.Duration
 
 /**
@@ -18,18 +16,6 @@ data class RetryProperties(
   val initialInterval: Duration = Duration.ofSeconds(5),
   val maxInterval: Duration = Duration.ofMinutes(1),
 ) {
-  /**
-   * Creates a [RetryBackoffSpec] based on the retry properties.
-   * This specification defines the backoff strategy for retries,
-   * including the number of attempts and interval timings.
-   *
-   * @return A configured [RetryBackoffSpec] for use with Reactor's retry mechanism.
-   */
-  fun create(): RetryBackoffSpec =
-    Retry
-      .backoff(maxAttempts, initialInterval)
-      .maxBackoff(maxInterval)
-
   /**
    * Creates a `retryWhen` callback function for Kotlin Flow.
    *
