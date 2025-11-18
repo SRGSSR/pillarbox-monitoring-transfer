@@ -2,13 +2,13 @@ package ch.srgssr.pillarbox.monitoring
 
 import ch.srgssr.pillarbox.monitoring.event.EventDispatcherClient
 import ch.srgssr.pillarbox.monitoring.event.setup.OpenSearchSetupService
+import ch.srgssr.pillarbox.monitoring.exception.HttpClientException
 import ch.srgssr.pillarbox.monitoring.log.logger
 import kotlinx.coroutines.runBlocking
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClientResponseException
 
 /**
  * DataTransferApplicationRunner is responsible for initializing the OpenSearch setup and
@@ -48,13 +48,8 @@ class DataTransferApplicationRunner(
         openSearchSetupService.start()
         logger.info("All setup tasks are completed, starting SSE client...")
         eventDispatcherClient.start().join()
-      } catch (e: WebClientResponseException) {
-        logger.error(
-          "OpenSearch connection failed " +
-            "| [Status Code: ${e.statusCode.value()}] " +
-            "| [Body: ${e.responseBodyAsString}]",
-          e,
-        )
+      } catch (e: HttpClientException) {
+        logger.error("OpenSearch connection failed", e)
       } catch (e: Exception) {
         logger.error("OpenSearch setup failed due to an unexpected error", e)
       } finally {

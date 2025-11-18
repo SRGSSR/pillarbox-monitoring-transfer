@@ -26,12 +26,13 @@ repositories {
 
 dependencies {
   // Dependencies
-  implementation("org.springframework.boot:spring-boot-starter-webflux")
+  implementation("org.springframework.boot:spring-boot-starter-json")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
   implementation("nl.basjes.parse.useragent:yauaa:7.32.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+  implementation("io.ktor:ktor-client-core:3.3.2")
+  implementation("io.ktor:ktor-client-cio:3.3.2")
 
   // Test Dependencies
   testImplementation("io.kotest:kotest-runner-junit5:5.9.1")

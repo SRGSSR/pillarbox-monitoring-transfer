@@ -1,32 +1,36 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
+import ch.srgssr.pillarbox.monitoring.io.is4xxClientError
 import ch.srgssr.pillarbox.monitoring.io.loadResourceContent
-import ch.srgssr.pillarbox.monitoring.log.error
+import ch.srgssr.pillarbox.monitoring.io.onStatus
+import ch.srgssr.pillarbox.monitoring.io.onSuccess
+import ch.srgssr.pillarbox.monitoring.io.throwOnNotSuccess
+import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
-import kotlinx.coroutines.reactor.awaitSingleOrNull
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.client.request.url
+import io.ktor.http.HttpStatusCode
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.annotation.Order
 import org.springframework.core.io.support.ResourcePatternResolver
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatusCode
-import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Mono
 
 /**
  * Task responsible for setting up the OpenSearch index template.
  *
  * This task creates the index template stored in `resources/opensearch/core_events-template.json`.
  *
- * @property webClient WebClient instance used to interact with the OpenSearch API.
+ * @property httpClient HttpClient instance used to interact with the OpenSearch API.
  * @property resourceLoader Resource loader used to access the index template JSON file.
  */
 @Component
 @Order(2)
 class IndexTemplateSetupTask(
-  @param:Qualifier("openSearchWebClient")
-  private val webClient: WebClient,
+  @param:Qualifier("openSearchHttpClient")
+  private val httpClient: HttpClient,
   private val resourceLoader: ResourcePatternResolver,
 ) : OpenSearchSetupTask {
   private companion object {
@@ -50,33 +54,25 @@ class IndexTemplateSetupTask(
     for (resource in resources) {
       val filename = resource.filename ?: continue
       val templateName = filename.removeSuffix("-template.json")
-      checkAndCreateTemplate(templateName).awaitSingleOrNull()
+      checkAndCreateTemplate(templateName)
     }
   }
 
-  private fun checkAndCreateTemplate(templateName: String): Mono<*> =
-    webClient
-      .get()
-      .uri("/_index_template/${templateName}_template")
-      .retrieve()
+  private suspend fun checkAndCreateTemplate(templateName: String) =
+    httpClient
+      .get("/_index_template/${templateName}_template")
       .onStatus(HttpStatusCode::is4xxClientError) {
-        logger.info("Index template '${templateName}_template' does not exist, creating it...")
-        createTemplate(templateName).then(Mono.empty())
-      }.onStatus(HttpStatusCode::is2xxSuccessful) {
-        logger.info("Index template '${templateName}_template' already exists, skipping creation.")
-        Mono.empty()
-      }.toBodilessEntity()
+        logger.info { "Index template '${templateName}_template' does not exist, creating it..." }
+        createTemplate(templateName)
+      }.onSuccess {
+        logger.info { "Index template '${templateName}_template' already exists, skipping creation." }
+      }
 
-  private fun createTemplate(templateName: String): Mono<*> {
-    val indexTemplateJson = resourceLoader.loadResourceContent("classpath:opensearch/$templateName-template.json")
-    return webClient
-      .put()
-      .uri("/_index_template/${templateName}_template")
-      .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-      .bodyValue(indexTemplateJson)
-      .retrieve()
-      .toBodilessEntity()
-      .doOnSuccess { logger.info("Index template '${templateName}_template' created successfully") }
-      .doOnError { e -> logger.error { "Failed to create index template '${templateName}_template': ${e.message}" } }
-  }
+  private suspend fun createTemplate(templateName: String) =
+    httpClient
+      .put {
+        url("/_index_template/${templateName}_template")
+        setBody(resourceLoader.loadResourceContent("classpath:opensearch/$templateName-template.json"))
+      }.onSuccess { logger.info { "Index template '${templateName}_template' created successfully" } }
+      .throwOnNotSuccess { "Failed to create index template '${templateName}_template'" }
 }

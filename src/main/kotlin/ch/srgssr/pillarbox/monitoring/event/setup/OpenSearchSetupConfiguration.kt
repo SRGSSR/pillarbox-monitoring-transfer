@@ -1,46 +1,38 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
 import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
-import io.netty.channel.ChannelOption
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.client.reactive.ReactorClientHttpConnector
-import org.springframework.web.reactive.function.client.ExchangeStrategies
-import org.springframework.web.reactive.function.client.WebClient
-import reactor.netty.http.client.HttpClient
 
 /**
  * Configuration class for OpenSearch setup.
  *
- * Provides a WebClient bean configured with the OpenSearch URI.
+ * Provides a [HttpClient] bean configured with the OpenSearch URI.
  */
 @Configuration
 class OpenSearchSetupConfiguration {
-  /**
-   * Creates a WebClient bean for OpenSearch using the specified URI from the properties.
-   *
-   * @param properties OpenSearch configuration properties containing the URI.
-   * @return Configured WebClient instance for OpenSearch.
-   */
-  @Bean("openSearchWebClient")
-  fun openSearchWebClient(properties: OpenSearchConfigurationProperties): WebClient {
-    val httpClient =
-      HttpClient
-        .create()
-        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, properties.timeout)
+  @Bean("openSearchHttpClient")
+  fun openSearchHttpClient(properties: OpenSearchConfigurationProperties): HttpClient =
+    HttpClient(CIO) {
+      engine {
+        requestTimeout = properties.timeout.toLong() // milliseconds
+      }
 
-    return WebClient
-      .builder()
-      .baseUrl(properties.uri.toString())
-      .clientConnector(ReactorClientHttpConnector(httpClient))
-      .exchangeStrategies(
-        ExchangeStrategies
-          .builder()
-          .codecs {
-            it.defaultCodecs().maxInMemorySize(
-              properties.maxInMemorySize.toBytes().toInt(),
-            )
-          }.build(),
-      ).build()
-  }
+      install(HttpTimeout) {
+        requestTimeoutMillis = properties.timeout.toLong()
+        connectTimeoutMillis = properties.timeout.toLong()
+        socketTimeoutMillis = properties.timeout.toLong()
+      }
+
+      defaultRequest {
+        url(properties.uri.toString())
+        contentType(ContentType.Application.Json)
+      }
+    }
 }
