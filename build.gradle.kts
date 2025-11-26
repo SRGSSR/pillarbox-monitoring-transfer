@@ -2,14 +2,14 @@ import org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN
 import java.util.Properties
 
 plugins {
-  kotlin("jvm") version "2.2.21"
-  kotlin("plugin.spring") version "2.2.21"
-  id("org.springframework.boot") version "3.5.7"
-  id("io.spring.dependency-management") version "1.1.7"
-  id("dev.detekt") version ("2.0.0-alpha.1")
-  id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
-  id("org.jetbrains.kotlinx.kover") version "0.9.3"
-  id("com.github.ben-manes.versions") version "0.53.0"
+  alias(libs.plugins.kotlin.jvm)
+  alias(libs.plugins.kotlin.spring)
+  alias(libs.plugins.spring.boot)
+  alias(libs.plugins.spring.dependency.management)
+  alias(libs.plugins.detekt)
+  alias(libs.plugins.ktlint)
+  alias(libs.plugins.kover)
+  alias(libs.plugins.versions)
 }
 
 group = "ch.srgssr.pillarbox"
@@ -26,23 +26,23 @@ repositories {
 
 dependencies {
   // Dependencies
-  implementation("org.springframework.boot:spring-boot-starter-json")
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-  implementation("org.jetbrains.kotlin:kotlin-reflect")
-  implementation("nl.basjes.parse.useragent:yauaa:7.32.0")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
-  implementation("io.ktor:ktor-client-core:3.3.2")
-  implementation("io.ktor:ktor-client-cio:3.3.2")
+  implementation(libs.spring.boot.starter.json)
+  implementation(libs.jackson.module.kotlin)
+  implementation(libs.kotlin.reflect)
+  implementation(libs.yauaa)
+  implementation(libs.kotlin.coroutines.core)
+  implementation(libs.ktor.client.core)
+  implementation(libs.ktor.client.cio)
 
   // Test Dependencies
-  testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
-  testImplementation("org.springframework.boot:spring-boot-starter-test")
-  testImplementation("io.kotest.extensions:kotest-extensions-spring:1.3.0")
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-  testImplementation("io.mockk:mockk:1.14.6")
-  testImplementation("com.squareup.okhttp3:mockwebserver:5.3.1")
-  testImplementation("com.squareup.okhttp3:okhttp:5.3.1")
-  testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  testImplementation(libs.kotest.runner.junit5)
+  testImplementation(libs.spring.boot.starter.test)
+  testImplementation(libs.kotest.extensions.spring)
+  testImplementation(libs.kotlin.test.junit5)
+  testImplementation(libs.mockk)
+  testImplementation(libs.mockwebserver)
+  testImplementation(libs.okhttp)
+  testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 kotlin {
@@ -52,14 +52,17 @@ kotlin {
 }
 
 detekt {
-  toolVersion = "2.0.0-alpha.1"
+  toolVersion = libs.versions.detekt.get()
   buildUponDefaultConfig = true
   allRules = false
   config.setFrom("$projectDir/detekt.yml")
 }
 
 ktlint {
-  version.set("1.8.0")
+  version.set(
+    libs.versions.ktlint.cli
+      .get(),
+  )
   debug.set(false)
   android.set(false)
   outputToConsole.set(true)
