@@ -3,7 +3,6 @@ package ch.srgssr.pillarbox.monitoring.event.setup
 import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
 import ch.srgssr.pillarbox.monitoring.test.PillarboxMonitoringTestConfiguration
 import ch.srgssr.pillarbox.monitoring.test.createDispatcher
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -14,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
+import tools.jackson.databind.json.JsonMapper
 
 @SpringBootTest
 @ContextConfiguration(classes = [PillarboxMonitoringTestConfiguration::class])
@@ -21,7 +21,7 @@ import org.springframework.test.context.ContextConfiguration
 class ISMPolicySetupTaskTest(
   private val ismPolicySetupTask: ISMPolicySetupTask,
   private val openSearchProperties: OpenSearchConfigurationProperties,
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
   private val resourceLoader: ResourcePatternResolver,
 ) : ShouldSpec({
 
@@ -94,7 +94,7 @@ class ISMPolicySetupTaskTest(
         mockWebServer.takeRequest().apply {
           path shouldBe "/_plugins/_ism/policies/$it"
           method shouldBe "PUT"
-          shouldNotThrow<Exception> { objectMapper.readTree(body.readUtf8()) }
+          shouldNotThrow<Exception> { jsonMapper.readTree(body.readUtf8()) }
         }
       }
     }

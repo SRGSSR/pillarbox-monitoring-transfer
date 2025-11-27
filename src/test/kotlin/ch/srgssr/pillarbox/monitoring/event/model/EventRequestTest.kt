@@ -1,18 +1,17 @@
 package ch.srgssr.pillarbox.monitoring.event.model
 
-import com.fasterxml.jackson.databind.JsonMappingException
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.json.JsonMapper
 
 @SpringBootTest
 @ActiveProfiles("test")
 class EventRequestTest(
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
 ) : ShouldSpec({
     should("deserialize successfully if all required fields are present") {
       // Given: an event as json
@@ -25,12 +24,11 @@ class EventRequestTest(
           "user_ip": "127.0.0.1",
           "version": 1,
           "data": { }
-          }
         }
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The data of the event should be correctly parsed.
       eventRequest.sessionId shouldBe "12345"
@@ -58,8 +56,8 @@ class EventRequestTest(
               .map { (key, value) -> "\"$key\": $value" }
               .joinToString(prefix = "{", postfix = "}")
 
-          shouldThrow<JsonMappingException> {
-            objectMapper.readValue<EventRequest>(jsonInput)
+          shouldThrow<JacksonException> {
+            jsonMapper.readValue(jsonInput, EventRequest::class.java)
           }
         }
         should("fail if $missingField is null") {
@@ -69,8 +67,8 @@ class EventRequestTest(
                 "\"$key\": ${if (key == missingField) "null" else value}"
               }.joinToString(prefix = "{", postfix = "}")
 
-          shouldThrow<JsonMappingException> {
-            objectMapper.readValue<EventRequest>(jsonInput)
+          shouldThrow<JacksonException> {
+            jsonMapper.readValue(jsonInput, EventRequest::class.java)
           }
         }
       }
@@ -95,7 +93,7 @@ class EventRequestTest(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The user agent data should have been resolved
       val dataNode = eventRequest.data as Map<*, *>
@@ -133,7 +131,7 @@ class EventRequestTest(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The user agent data should have been resolved
       val dataNode = eventRequest.data as Map<*, *>
@@ -172,7 +170,7 @@ class EventRequestTest(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The data for browser, os and device should not have been modified
       val dataNode = eventRequest.data as Map<*, *>

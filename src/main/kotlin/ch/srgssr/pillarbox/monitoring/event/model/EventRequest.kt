@@ -2,7 +2,7 @@ package ch.srgssr.pillarbox.monitoring.event.model
 
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import tools.jackson.databind.annotation.JsonDeserialize
 
 /**
  * Represents an event request stored in the OpenSearch `actions` index.

@@ -16,7 +16,7 @@ group = "ch.srgssr.pillarbox"
 
 java {
   toolchain {
-    languageVersion = JavaLanguageVersion.of(23)
+    languageVersion = JavaLanguageVersion.of(24)
   }
 }
 
@@ -27,7 +27,6 @@ repositories {
 dependencies {
   // Dependencies
   implementation(libs.spring.boot.starter.json)
-  implementation(libs.jackson.module.kotlin)
   implementation(libs.kotlin.reflect)
   implementation(libs.yauaa)
   implementation(libs.kotlin.coroutines.core)

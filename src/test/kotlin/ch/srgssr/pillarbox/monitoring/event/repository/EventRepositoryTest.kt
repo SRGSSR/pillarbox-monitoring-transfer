@@ -2,7 +2,6 @@ package ch.srgssr.pillarbox.monitoring.event.repository
 
 import ch.srgssr.pillarbox.monitoring.test.PillarboxMonitoringTestConfiguration
 import ch.srgssr.pillarbox.monitoring.test.eventRequest
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import okhttp3.mockwebserver.MockResponse
@@ -10,13 +9,14 @@ import okhttp3.mockwebserver.MockWebServer
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
+import tools.jackson.databind.json.JsonMapper
 
 @SpringBootTest
 @ContextConfiguration(classes = [PillarboxMonitoringTestConfiguration::class])
 @ActiveProfiles("test")
 class EventRepositoryTest(
   private val eventRepository: EventRepository,
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
   private val openSearchProperties: OpenSearchConfigurationProperties,
 ) : ShouldSpec({
 
@@ -80,8 +80,8 @@ class EventRepositoryTest(
           .filter { it.isNotBlank() }
       lines.size shouldBe 4
       lines[0] shouldBe """{ "create": { "_index": "core_events" } }"""
-      objectMapper.readTree(lines[1])["event_name"].asText() shouldBe "START"
+      jsonMapper.readTree(lines[1])["event_name"].asString() shouldBe "START"
       lines[2] shouldBe """{ "create": { "_index": "heartbeat_events" } }"""
-      objectMapper.readTree(lines[3])["event_name"].asText() shouldBe "HEARTBEAT"
+      jsonMapper.readTree(lines[3])["event_name"].asString() shouldBe "HEARTBEAT"
     }
   })

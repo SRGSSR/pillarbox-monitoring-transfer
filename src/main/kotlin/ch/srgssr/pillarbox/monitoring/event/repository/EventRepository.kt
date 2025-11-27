@@ -6,7 +6,6 @@ import ch.srgssr.pillarbox.monitoring.io.throwOnNotSuccess
 import ch.srgssr.pillarbox.monitoring.log.debug
 import ch.srgssr.pillarbox.monitoring.log.error
 import ch.srgssr.pillarbox.monitoring.log.logger
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
@@ -14,18 +13,19 @@ import io.ktor.client.request.setBody
 import io.ktor.client.request.url
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
+import tools.jackson.databind.json.JsonMapper
 
 /**
  * Repository responsible for sending event data to OpenSearch using the bulk API.
  *
  * @property httpClient The [HttpClient] configured to connect to the OpenSearch instance.
- * @property objectMapper Jackson's [ObjectMapper] used to serialize event objects.
+ * @property jsonMapper Jackson's [JsonMapper] used to serialize event objects.
  */
 @Component
 class EventRepository(
   @param:Qualifier("openSearchHttpClient")
   private val httpClient: HttpClient,
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
 ) {
   private companion object {
     /**
@@ -54,7 +54,7 @@ class EventRepository(
         val responseStr = body<String>()
         logger.debug { "Bulk response: $responseStr " }
 
-        val response = objectMapper.readTree(responseStr)
+        val response = jsonMapper.readTree(responseStr)
         if (response["errors"]?.asBoolean() == true) {
           response["items"]
             ?.mapNotNull { it["create"] }
@@ -84,7 +84,7 @@ class EventRepository(
       events.forEach { event ->
         val indexName = if (event.eventName == "HEARTBEAT") "heartbeat_events" else "core_events"
         appendLine("""{ "create": { "_index": "$indexName" } }""")
-        appendLine(objectMapper.writeValueAsString(event))
+        appendLine(jsonMapper.writeValueAsString(event))
       }
     }
 }
