@@ -1,7 +1,7 @@
 [versions]
 #Plugins
 kotlin = "2.2.21"
-spring-boot = "3.5.7"
+spring-boot = "4.0.0"
 spring-deps = "1.1.7"
 detekt = "2.0.0-alpha.1"
 ktlint = "14.0.1"
@@ -23,7 +23,6 @@ spring-boot-starter-json = { module = "org.springframework.boot:spring-boot-star
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core"}
-jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
 yauaa = { module = "nl.basjes.parse.useragent:yauaa", version.ref = "yauaa" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }

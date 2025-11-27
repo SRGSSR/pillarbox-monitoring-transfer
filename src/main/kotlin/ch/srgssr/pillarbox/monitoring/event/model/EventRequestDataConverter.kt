@@ -1,6 +1,6 @@
 package ch.srgssr.pillarbox.monitoring.event.model
 
-import com.fasterxml.jackson.databind.util.StdConverter
+import tools.jackson.databind.util.StdConverter
 
 /**
  * Custom converter for [EventRequest].

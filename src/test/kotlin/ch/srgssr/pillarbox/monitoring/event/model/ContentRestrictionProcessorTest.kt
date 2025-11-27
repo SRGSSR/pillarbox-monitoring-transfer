@@ -1,16 +1,15 @@
 package ch.srgssr.pillarbox.monitoring.event.model
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
+import tools.jackson.databind.json.JsonMapper
 
 @SpringBootTest
 @ActiveProfiles("test")
 class ContentRestrictionProcessorTest(
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
 ) : ShouldSpec({
     should("classify error messages correctly based on predefined content restrictions") {
       // Given: an input with a predefined error message
@@ -29,7 +28,7 @@ class ContentRestrictionProcessorTest(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The error should be classified correctly
       val dataNode = eventRequest.data as Map<*, *>
@@ -54,7 +53,7 @@ class ContentRestrictionProcessorTest(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The error should be classified correctly
       val dataNode = eventRequest.data as Map<*, *>
@@ -79,7 +78,7 @@ class ContentRestrictionProcessorTest(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The error should be classified correctly
       val dataNode = eventRequest.data as Map<*, *>
@@ -104,7 +103,7 @@ class ContentRestrictionProcessorTest(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The block reason should be classified correctly
       val dataNode = eventRequest.data as Map<*, *>

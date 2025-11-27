@@ -11,7 +11,7 @@ clients, enabling data visualization and insights through tools like Grafana.
 
 **Prerequisites and Requirements**
 
-- **JDK 23** or higher
+- **JDK 24** or higher
 - **Docker** (optional)
 
 **Setup**

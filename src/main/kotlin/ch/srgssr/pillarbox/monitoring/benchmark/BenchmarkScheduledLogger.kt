@@ -22,7 +22,7 @@ class BenchmarkScheduledLogger {
   /**
    * The scheduled logging function, executes every minute.
    */
-  @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
+  @Scheduled(initialDelay = 1, fixedRate = 1, timeUnit = TimeUnit.MINUTES)
   fun logBenchmarkAverages() {
     logger.info { "Benchmark averages: ${TimeTracker.averages}" }
     logger.info { "Latest stats per minute: ${StatsTracker.getAndResetAll()}" }

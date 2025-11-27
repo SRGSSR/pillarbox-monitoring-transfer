@@ -42,7 +42,7 @@ class DataTransferApplicationRunner(
    * @param args Application arguments.
    */
   @Suppress("TooGenericExceptionCaught")
-  override fun run(args: ApplicationArguments?) =
+  override fun run(args: ApplicationArguments) =
     runBlocking {
       try {
         openSearchSetupService.start()

@@ -1,16 +1,15 @@
 package ch.srgssr.pillarbox.monitoring.event.model
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
+import tools.jackson.databind.json.JsonMapper
 
 @SpringBootTest
 @ActiveProfiles("test")
 class DeviceNameProcessorTest(
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
 ) : ShouldSpec({
 
     context("device model deserialization") {
@@ -41,7 +40,7 @@ class DeviceNameProcessorTest(
             }
             """.trimIndent()
 
-          val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+          val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
           val dataNode = eventRequest.data as Map<*, *>
           val deviceNode = dataNode["device"] as Map<*, *>
@@ -67,7 +66,7 @@ class DeviceNameProcessorTest(
         }
         """.trimIndent()
 
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       val dataNode = eventRequest.data as Map<*, *>
       val deviceNode = dataNode["device"] as Map<*, *>
@@ -87,7 +86,7 @@ class DeviceNameProcessorTest(
         }
         """.trimIndent()
 
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       val dataNode = eventRequest.data as Map<*, *>
       dataNode["device"] shouldBe null

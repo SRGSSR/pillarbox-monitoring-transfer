@@ -4,7 +4,6 @@ import ch.srgssr.pillarbox.monitoring.event.model.EventRequest
 import ch.srgssr.pillarbox.monitoring.log.error
 import ch.srgssr.pillarbox.monitoring.log.logger
 import ch.srgssr.pillarbox.monitoring.log.warn
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.defaultRequest
@@ -17,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.retryWhen
 import org.springframework.stereotype.Component
+import tools.jackson.databind.json.JsonMapper
 
 /**
  * Provides a reactive [Flow] of [EventRequest]s by connecting to a remote Server-Sent Events (SSE) endpoint.
@@ -27,12 +27,12 @@ import org.springframework.stereotype.Component
  * - Applying retry logic in case of transient failures, with support for logging retry attempts.
  *
  * @property properties The SSE client configuration including URI and retry strategy.
- * @property objectMapper
+ * @property jsonMapper Jackson's [JsonMapper] used to serialize event objects.
  */
 @Component
 class EventFlowProvider(
   private val properties: EventDispatcherClientConfiguration,
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
 ) {
   private companion object {
     /**
@@ -62,7 +62,7 @@ class EventFlowProvider(
       try {
         httpClient.sse("") {
           incoming.collect {
-            val event = objectMapper.readValue(it.data, EventRequest::class.java)
+            val event = jsonMapper.readValue(it.data, EventRequest::class.java)
             trySend(event).isSuccess
           }
         }

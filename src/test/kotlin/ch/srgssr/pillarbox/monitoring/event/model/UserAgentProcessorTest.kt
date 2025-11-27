@@ -1,16 +1,15 @@
 package ch.srgssr.pillarbox.monitoring.event.model
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
+import tools.jackson.databind.json.JsonMapper
 
 @SpringBootTest
 @ActiveProfiles("test")
 class UserAgentProcessorTest(
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
 ) : ShouldSpec({
 
     should("deserialize an event and resolve user agent") {
@@ -32,7 +31,7 @@ class UserAgentProcessorTest(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The user agent data should have been resolved
       val dataNode = eventRequest.data as Map<*, *>
@@ -70,7 +69,7 @@ class UserAgentProcessorTest(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The user agent data should have been resolved
       val dataNode = eventRequest.data as Map<*, *>
@@ -109,7 +108,7 @@ class UserAgentProcessorTest(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The data for browser, os and device should not have been modified
       val dataNode = eventRequest.data as Map<*, *>

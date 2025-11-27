@@ -1,17 +1,16 @@
 package ch.srgssr.pillarbox.monitoring.event.model
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
+import tools.jackson.databind.json.JsonMapper
 import java.math.BigInteger
 
 @SpringBootTest
 @ActiveProfiles("test")
 class ClampingDataDeserializer(
-  private val objectMapper: ObjectMapper,
+  private val jsonMapper: JsonMapper,
 ) : ShouldSpec({
 
     should("serialize BigInteger within Long range correctly") {
@@ -33,7 +32,7 @@ class ClampingDataDeserializer(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The timing should not be clamped
       val dataNode = eventRequest.data as Map<*, *>
@@ -60,7 +59,7 @@ class ClampingDataDeserializer(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The timing should be clamped
       val dataNode = eventRequest.data as Map<*, *>
@@ -87,7 +86,7 @@ class ClampingDataDeserializer(
         """.trimIndent()
 
       // When: the event is deserialized
-      val eventRequest = objectMapper.readValue<EventRequest>(jsonInput)
+      val eventRequest = jsonMapper.readValue(jsonInput, EventRequest::class.java)
 
       // Then: The timing should be clamped
       val dataNode = eventRequest.data as Map<*, *>
