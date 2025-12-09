@@ -1,7 +1,7 @@
 package ch.srgssr.pillarbox.monitoring.event.model
 
-import ch.srgssr.pillarbox.monitoring.io.readLines
-import org.springframework.core.io.DefaultResourceLoader
+import ch.srgssr.pillarbox.monitoring.io.ResourceLoader
+import ch.srgssr.pillarbox.monitoring.io.useLines
 
 /**
  * Processor that maps device model identifiers to human-readable device names.
@@ -16,7 +16,7 @@ class DeviceNameProcessor : DataProcessor {
      * Source: https://gist.github.com/adamawolf/3048717
      */
     private val mappings: Map<String, String> =
-      DefaultResourceLoader().readLines("classpath:mappings/device-name.txt") { lines ->
+      ResourceLoader.getResource("mappings/device-name.txt").useLines { lines ->
         lines
           .map { it.trim().split(":", limit = 2) }
           .filter { it.size == 2 }

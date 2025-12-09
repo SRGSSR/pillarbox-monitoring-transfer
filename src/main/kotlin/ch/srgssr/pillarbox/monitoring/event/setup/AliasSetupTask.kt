@@ -1,9 +1,11 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
+import ch.srgssr.pillarbox.monitoring.io.ResourceLoader
+import ch.srgssr.pillarbox.monitoring.io.filename
 import ch.srgssr.pillarbox.monitoring.io.is4xxClientError
-import ch.srgssr.pillarbox.monitoring.io.loadResourceContent
 import ch.srgssr.pillarbox.monitoring.io.onStatus
 import ch.srgssr.pillarbox.monitoring.io.onSuccess
+import ch.srgssr.pillarbox.monitoring.io.readText
 import ch.srgssr.pillarbox.monitoring.io.throwOnNotSuccess
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
@@ -15,7 +17,6 @@ import io.ktor.client.request.url
 import io.ktor.http.HttpStatusCode
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.annotation.Order
-import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.stereotype.Component
 
 /**
@@ -32,7 +33,6 @@ import org.springframework.stereotype.Component
 class AliasSetupTask(
   @param:Qualifier("openSearchHttpClient")
   private val httpClient: HttpClient,
-  private val resourceLoader: ResourcePatternResolver,
 ) : OpenSearchSetupTask {
   private companion object {
     /**
@@ -48,30 +48,34 @@ class AliasSetupTask(
    */
   override suspend fun run() {
     val resources =
-      resourceLoader.getResources(
-        "classpath:opensearch/*-alias.json",
+      ResourceLoader.getResources(
+        "opensearch/*-alias.json",
       )
 
     for (resource in resources) {
-      val filename = resource.filename ?: continue
+      val filename = resource.filename
       val aliasName = filename.removeSuffix("-alias.json")
-      checkAndCreateAlias(aliasName)
+      checkAndCreateAlias(aliasName, resource::readText)
     }
   }
 
-  private suspend fun checkAndCreateAlias(aliasName: String) =
-    httpClient
-      .get("/_alias/$aliasName")
-      .onStatus(HttpStatusCode::is4xxClientError) {
-        logger.info { "Alias '$aliasName' already exists, skipping creation." }
-        createAlias(aliasName)
-      }.onSuccess { logger.info { "Alias '$aliasName' does not exist, creating alias..." } }
+  private suspend fun checkAndCreateAlias(
+    aliasName: String,
+    aliasProvider: () -> String,
+  ) = httpClient
+    .get("/_alias/$aliasName")
+    .onStatus(HttpStatusCode::is4xxClientError) {
+      logger.info { "Alias '$aliasName' already exists, skipping creation." }
+      createAlias(aliasName, aliasProvider())
+    }.onSuccess { logger.info { "Alias '$aliasName' does not exist, creating alias..." } }
 
-  private suspend fun createAlias(aliasName: String) =
-    httpClient
-      .post {
-        url("/_aliases")
-        setBody(resourceLoader.loadResourceContent("classpath:opensearch/$aliasName-alias.json"))
-      }.onSuccess { logger.info { "Alias '$aliasName' created successfully" } }
-      .throwOnNotSuccess { "Failed to create alias '$aliasName'" }
+  private suspend fun createAlias(
+    aliasName: String,
+    alias: String,
+  ) = httpClient
+    .post {
+      url("/_aliases")
+      setBody(alias)
+    }.onSuccess { logger.info { "Alias '$aliasName' created successfully" } }
+    .throwOnNotSuccess { "Failed to create alias '$aliasName'" }
 }

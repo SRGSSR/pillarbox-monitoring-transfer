@@ -1,6 +1,8 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
 import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
+import ch.srgssr.pillarbox.monitoring.io.ResourceLoader
+import ch.srgssr.pillarbox.monitoring.io.filename
 import ch.srgssr.pillarbox.monitoring.test.PillarboxMonitoringTestConfiguration
 import ch.srgssr.pillarbox.monitoring.test.createDispatcher
 import io.kotest.assertions.throwables.shouldNotThrow
@@ -22,7 +24,6 @@ class ISMPolicySetupTaskTest(
   private val ismPolicySetupTask: ISMPolicySetupTask,
   private val openSearchProperties: OpenSearchConfigurationProperties,
   private val jsonMapper: JsonMapper,
-  private val resourceLoader: ResourcePatternResolver,
 ) : ShouldSpec({
 
     var mockWebServer = MockWebServer()
@@ -30,9 +31,9 @@ class ISMPolicySetupTaskTest(
 
     beforeSpec {
       policyNames +=
-        resourceLoader
-          .getResources("classpath:opensearch/*-policy.json")
-          .mapNotNull { "${it.filename?.removeSuffix("-policy.json")}_policy" }
+        ResourceLoader
+          .getResources("opensearch/*-policy.json")
+          .mapNotNull { "${it.filename.removeSuffix("-policy.json")}_policy" }
 
       policyNames.size shouldBeGreaterThan 0
     }

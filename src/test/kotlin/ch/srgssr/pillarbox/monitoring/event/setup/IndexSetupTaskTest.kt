@@ -1,6 +1,8 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
 import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
+import ch.srgssr.pillarbox.monitoring.io.ResourceLoader
+import ch.srgssr.pillarbox.monitoring.io.filename
 import ch.srgssr.pillarbox.monitoring.test.PillarboxMonitoringTestConfiguration
 import ch.srgssr.pillarbox.monitoring.test.createDispatcher
 import io.kotest.assertions.throwables.shouldNotThrow
@@ -10,7 +12,6 @@ import io.kotest.matchers.shouldBe
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import tools.jackson.databind.json.JsonMapper
@@ -22,7 +23,6 @@ class IndexSetupTaskTest(
   private val indexSetupTask: IndexSetupTask,
   private val openSearchProperties: OpenSearchConfigurationProperties,
   private val jsonMapper: JsonMapper,
-  private val resourceLoader: ResourcePatternResolver,
 ) : ShouldSpec({
 
     var mockWebServer = MockWebServer()
@@ -30,9 +30,9 @@ class IndexSetupTaskTest(
 
     beforeSpec {
       indexNames +=
-        resourceLoader
-          .getResources("classpath:opensearch/*-index.json")
-          .mapNotNull { it.filename?.removeSuffix("-index.json") }
+        ResourceLoader
+          .getResources("opensearch/*-index.json")
+          .mapNotNull { it.filename.removeSuffix("-index.json") }
 
       indexNames.size shouldBeGreaterThan 0
     }

@@ -1,9 +1,11 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
+import ch.srgssr.pillarbox.monitoring.io.ResourceLoader
+import ch.srgssr.pillarbox.monitoring.io.filename
 import ch.srgssr.pillarbox.monitoring.io.is4xxClientError
-import ch.srgssr.pillarbox.monitoring.io.loadResourceContent
 import ch.srgssr.pillarbox.monitoring.io.onStatus
 import ch.srgssr.pillarbox.monitoring.io.onSuccess
+import ch.srgssr.pillarbox.monitoring.io.readText
 import ch.srgssr.pillarbox.monitoring.io.throwOnNotSuccess
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
@@ -15,7 +17,6 @@ import io.ktor.client.request.url
 import io.ktor.http.HttpStatusCode
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.annotation.Order
-import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.stereotype.Component
 
 /**
@@ -33,7 +34,6 @@ import org.springframework.stereotype.Component
 class IndexSetupTask(
   @param:Qualifier("openSearchHttpClient")
   private val httpClient: HttpClient,
-  private val resourceLoader: ResourcePatternResolver,
 ) : OpenSearchSetupTask {
   private companion object {
     /**
@@ -49,30 +49,34 @@ class IndexSetupTask(
    */
   override suspend fun run() {
     val resources =
-      resourceLoader.getResources(
-        "classpath:opensearch/*-index.json",
+      ResourceLoader.getResources(
+        "opensearch/*-index.json",
       )
 
     for (resource in resources) {
-      val filename = resource.filename ?: continue
+      val filename = resource.filename
       val indexName = filename.removeSuffix("-index.json")
-      checkAndCreateIndex(indexName)
+      checkAndCreateIndex(indexName, resource::readText)
     }
   }
 
-  private suspend fun checkAndCreateIndex(indexName: String) =
-    httpClient
-      .head("/$indexName")
-      .onStatus(HttpStatusCode::is4xxClientError) {
-        logger.info { "Index '$indexName' does not exist, creating index..." }
-        createIndex(indexName)
-      }.onSuccess { logger.info { "Index '$indexName' already exists, skipping creation." } }
+  private suspend fun checkAndCreateIndex(
+    indexName: String,
+    indexProvider: () -> String,
+  ) = httpClient
+    .head("/$indexName")
+    .onStatus(HttpStatusCode::is4xxClientError) {
+      logger.info { "Index '$indexName' does not exist, creating index..." }
+      createIndex(indexName, indexProvider())
+    }.onSuccess { logger.info { "Index '$indexName' already exists, skipping creation." } }
 
-  private suspend fun createIndex(indexName: String) =
-    httpClient
-      .put {
-        url("/$indexName-000001")
-        setBody(resourceLoader.loadResourceContent("classpath:opensearch/$indexName-index.json"))
-      }.onSuccess { logger.info { "Index '$indexName' created successfully" } }
-      .throwOnNotSuccess { "Failed to create index '$indexName'" }
+  private suspend fun createIndex(
+    indexName: String,
+    index: String,
+  ) = httpClient
+    .put {
+      url("/$indexName-000001")
+      setBody(index)
+    }.onSuccess { logger.info { "Index '$indexName' created successfully" } }
+    .throwOnNotSuccess { "Failed to create index '$indexName'" }
 }

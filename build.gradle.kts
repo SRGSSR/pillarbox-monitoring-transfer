@@ -32,6 +32,7 @@ dependencies {
   implementation(libs.kotlin.coroutines.core)
   implementation(libs.ktor.client.core)
   implementation(libs.ktor.client.cio)
+  implementation(libs.classgraph)
 
   // Test Dependencies
   testImplementation(libs.kotest.runner.junit5)

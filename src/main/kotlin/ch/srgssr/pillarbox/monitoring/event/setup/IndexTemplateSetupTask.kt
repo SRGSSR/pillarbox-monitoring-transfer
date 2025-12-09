@@ -1,9 +1,11 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
+import ch.srgssr.pillarbox.monitoring.io.ResourceLoader
+import ch.srgssr.pillarbox.monitoring.io.filename
 import ch.srgssr.pillarbox.monitoring.io.is4xxClientError
-import ch.srgssr.pillarbox.monitoring.io.loadResourceContent
 import ch.srgssr.pillarbox.monitoring.io.onStatus
 import ch.srgssr.pillarbox.monitoring.io.onSuccess
+import ch.srgssr.pillarbox.monitoring.io.readText
 import ch.srgssr.pillarbox.monitoring.io.throwOnNotSuccess
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
@@ -15,7 +17,6 @@ import io.ktor.client.request.url
 import io.ktor.http.HttpStatusCode
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.annotation.Order
-import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.stereotype.Component
 
 /**
@@ -31,7 +32,6 @@ import org.springframework.stereotype.Component
 class IndexTemplateSetupTask(
   @param:Qualifier("openSearchHttpClient")
   private val httpClient: HttpClient,
-  private val resourceLoader: ResourcePatternResolver,
 ) : OpenSearchSetupTask {
   private companion object {
     /**
@@ -47,32 +47,36 @@ class IndexTemplateSetupTask(
    */
   override suspend fun run() {
     val resources =
-      resourceLoader.getResources(
-        "classpath:opensearch/*-template.json",
+      ResourceLoader.getResources(
+        "opensearch/*-template.json",
       )
 
     for (resource in resources) {
-      val filename = resource.filename ?: continue
+      val filename = resource.filename
       val templateName = filename.removeSuffix("-template.json")
-      checkAndCreateTemplate(templateName)
+      checkAndCreateTemplate(templateName, resource::readText)
     }
   }
 
-  private suspend fun checkAndCreateTemplate(templateName: String) =
-    httpClient
-      .get("/_index_template/${templateName}_template")
-      .onStatus(HttpStatusCode::is4xxClientError) {
-        logger.info { "Index template '${templateName}_template' does not exist, creating it..." }
-        createTemplate(templateName)
-      }.onSuccess {
-        logger.info { "Index template '${templateName}_template' already exists, skipping creation." }
-      }
+  private suspend fun checkAndCreateTemplate(
+    templateName: String,
+    templateProvider: () -> String,
+  ) = httpClient
+    .get("/_index_template/${templateName}_template")
+    .onStatus(HttpStatusCode::is4xxClientError) {
+      logger.info { "Index template '${templateName}_template' does not exist, creating it..." }
+      createTemplate(templateName, templateProvider())
+    }.onSuccess {
+      logger.info { "Index template '${templateName}_template' already exists, skipping creation." }
+    }
 
-  private suspend fun createTemplate(templateName: String) =
-    httpClient
-      .put {
-        url("/_index_template/${templateName}_template")
-        setBody(resourceLoader.loadResourceContent("classpath:opensearch/$templateName-template.json"))
-      }.onSuccess { logger.info { "Index template '${templateName}_template' created successfully" } }
-      .throwOnNotSuccess { "Failed to create index template '${templateName}_template'" }
+  private suspend fun createTemplate(
+    templateName: String,
+    template: String,
+  ) = httpClient
+    .put {
+      url("/_index_template/${templateName}_template")
+      setBody(template)
+    }.onSuccess { logger.info { "Index template '${templateName}_template' created successfully" } }
+    .throwOnNotSuccess { "Failed to create index template '${templateName}_template'" }
 }
