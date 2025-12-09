@@ -25,19 +25,19 @@ class OpenSearchSetupServiceTest(
 
     val aliasNames =
       resourceLoader
-        .getResources("classpath:opensearch/*-alias.json")
+        .getResources("opensearch/*-alias.json")
         .mapNotNull { "${it.filename?.removeSuffix("-alias.json")}" }
     val indexNames =
       resourceLoader
-        .getResources("classpath:opensearch/*-index.json")
+        .getResources("opensearch/*-index.json")
         .mapNotNull { "${it.filename?.removeSuffix("-index.json")}" }
     val policyNames =
       resourceLoader
-        .getResources("classpath:opensearch/*-policy.json")
+        .getResources("opensearch/*-policy.json")
         .mapNotNull { "${it.filename?.removeSuffix("-policy.json")}_policy" }
     val templateNames =
       resourceLoader
-        .getResources("classpath:opensearch/*-template.json")
+        .getResources("opensearch/*-template.json")
         .mapNotNull { "${it.filename?.removeSuffix("-template.json")}_template" }
 
     beforeTest {

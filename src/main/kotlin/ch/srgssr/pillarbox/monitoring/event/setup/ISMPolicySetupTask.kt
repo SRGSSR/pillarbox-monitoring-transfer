@@ -1,9 +1,11 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
+import ch.srgssr.pillarbox.monitoring.io.ResourceLoader
+import ch.srgssr.pillarbox.monitoring.io.filename
 import ch.srgssr.pillarbox.monitoring.io.is4xxClientError
-import ch.srgssr.pillarbox.monitoring.io.loadResourceContent
 import ch.srgssr.pillarbox.monitoring.io.onStatus
 import ch.srgssr.pillarbox.monitoring.io.onSuccess
+import ch.srgssr.pillarbox.monitoring.io.readText
 import ch.srgssr.pillarbox.monitoring.io.throwOnNotSuccess
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
@@ -14,7 +16,6 @@ import io.ktor.client.request.setBody
 import io.ktor.client.request.url
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.annotation.Order
-import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.stereotype.Component
 
 /**
@@ -31,7 +32,6 @@ import org.springframework.stereotype.Component
 class ISMPolicySetupTask(
   @param:Qualifier("openSearchHttpClient")
   private val httpClient: HttpClient,
-  private val resourceLoader: ResourcePatternResolver,
 ) : OpenSearchSetupTask {
   private companion object {
     /**
@@ -47,33 +47,37 @@ class ISMPolicySetupTask(
    */
   override suspend fun run() {
     val resources =
-      resourceLoader.getResources(
-        "classpath:opensearch/*-policy.json",
+      ResourceLoader.getResources(
+        "opensearch/*-policy.json",
       )
 
     for (resource in resources) {
-      val filename = resource.filename ?: continue
+      val filename = resource.filename
       val policyName = filename.removeSuffix("-policy.json")
-      checkAndApplyISMPolicy(policyName)
+      checkAndApplyISMPolicy(policyName, resource::readText)
     }
   }
 
-  private suspend fun checkAndApplyISMPolicy(policyName: String) =
-    httpClient
-      .get("/_plugins/_ism/policies/${policyName}_policy")
-      .onStatus(io.ktor.http.HttpStatusCode::is4xxClientError) {
-        logger.info { "ISM policy '${policyName}_policy' does not exist, creating new ISM policy..." }
-        applyISMPolicy(policyName)
-      }.onSuccess {
-        logger.info { "ISM policy '${policyName}_policy' already exists, skipping creation." }
-      }
+  private suspend fun checkAndApplyISMPolicy(
+    policyName: String,
+    policyProvider: () -> String,
+  ) = httpClient
+    .get("/_plugins/_ism/policies/${policyName}_policy")
+    .onStatus(io.ktor.http.HttpStatusCode::is4xxClientError) {
+      logger.info { "ISM policy '${policyName}_policy' does not exist, creating new ISM policy..." }
+      applyISMPolicy(policyName, policyProvider())
+    }.onSuccess {
+      logger.info { "ISM policy '${policyName}_policy' already exists, skipping creation." }
+    }
 
-  private suspend fun applyISMPolicy(policyName: String) =
-    httpClient
-      .put {
-        url("/_plugins/_ism/policies/${policyName}_policy")
-        setBody(resourceLoader.loadResourceContent("classpath:opensearch/$policyName-policy.json"))
-      }.onSuccess {
-        logger.info { "ISM Policy '${policyName}_policy' applied successfully" }
-      }.throwOnNotSuccess { "Failed to apply ISM Policy '${policyName}_policy'" }
+  private suspend fun applyISMPolicy(
+    policyName: String,
+    policy: String,
+  ) = httpClient
+    .put {
+      url("/_plugins/_ism/policies/${policyName}_policy")
+      setBody(policy)
+    }.onSuccess {
+      logger.info { "ISM Policy '${policyName}_policy' applied successfully" }
+    }.throwOnNotSuccess { "Failed to apply ISM Policy '${policyName}_policy'" }
 }
