@@ -1,5 +1,6 @@
 package ch.srgssr.pillarbox.monitoring
 
+import ch.srgssr.pillarbox.monitoring.benchmark.BenchmarkScheduledLogger
 import ch.srgssr.pillarbox.monitoring.event.EventDispatcherClient
 import ch.srgssr.pillarbox.monitoring.event.setup.OpenSearchSetupService
 import ch.srgssr.pillarbox.monitoring.exception.HttpClientException
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component
 class DataTransferApplicationRunner(
   private val openSearchSetupService: OpenSearchSetupService,
   private val eventDispatcherClient: EventDispatcherClient,
+  private val benchmarkScheduledLogger: BenchmarkScheduledLogger,
   private val terminationService: TerminationService,
 ) : ApplicationRunner {
   private companion object {
@@ -44,6 +46,7 @@ class DataTransferApplicationRunner(
   @Suppress("TooGenericExceptionCaught")
   override fun run(args: ApplicationArguments) =
     runBlocking {
+      val benchmarkJob = benchmarkScheduledLogger.start()
       try {
         openSearchSetupService.start()
         logger.info("All setup tasks are completed, starting SSE client...")
@@ -53,6 +56,7 @@ class DataTransferApplicationRunner(
       } catch (e: Exception) {
         logger.error("OpenSearch setup failed due to an unexpected error", e)
       } finally {
+        benchmarkJob.cancel()
         terminationService.terminateApplication()
       }
     }
