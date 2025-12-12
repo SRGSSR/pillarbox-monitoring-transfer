@@ -1,6 +1,6 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
-import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
+import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfig
 import ch.srgssr.pillarbox.monitoring.io.onSuccess
 import ch.srgssr.pillarbox.monitoring.io.throwOnNotSuccess
 import ch.srgssr.pillarbox.monitoring.log.info
@@ -23,14 +23,14 @@ import org.springframework.stereotype.Service
  *
  * @property httpClient HttpClient instance used to interact with the OpenSearch API.
  * @property tasks The list of setup tasks that must be executed to prepare the OpenSearch environment.
- * @property properties OpenSearch configuration properties including the URI and retry settings.
+ * @property config OpenSearch configuration including the URI and retry settings.
  */
 @Service
 class OpenSearchSetupService(
   @param:Qualifier("openSearchHttpClient")
   private val httpClient: HttpClient,
   private val tasks: List<OpenSearchSetupTask>,
-  private val properties: OpenSearchConfigurationProperties,
+  private val config: OpenSearchConfig,
 ) {
   private companion object {
     val logger = logger()
@@ -44,7 +44,7 @@ class OpenSearchSetupService(
    * all tasks are complete, the SSE client is started.
    *
    * If the health check or any setup task fails, the process will retry based on
-   * the retry settings defined in [properties]. If retries are exhausted, the
+   * the retry settings defined in [config]. If retries are exhausted, the
    * application will be terminated.
    */
   suspend fun start() {
@@ -61,7 +61,7 @@ class OpenSearchSetupService(
           .throwOnNotSuccess { "Connection error while checking OpenSearch health" },
       )
     }.retryWhen(
-      properties.retry.toRetryWhen(
+      config.retry.toRetryWhen(
         onRetry = { cause, attempt, delayMillis ->
           logger.warn(cause) {
             "Retrying after failure: ${cause.message}. Attempt ${attempt + 1}. Waiting for ${delayMillis}ms"

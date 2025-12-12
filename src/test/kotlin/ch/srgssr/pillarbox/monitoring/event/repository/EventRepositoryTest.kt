@@ -17,14 +17,14 @@ import tools.jackson.databind.json.JsonMapper
 class EventRepositoryTest(
   private val eventRepository: EventRepository,
   private val jsonMapper: JsonMapper,
-  private val openSearchProperties: OpenSearchConfigurationProperties,
+  private val openSearchConfig: OpenSearchConfig,
 ) : ShouldSpec({
 
     var mockWebServer = MockWebServer()
 
     beforeTest {
       mockWebServer = MockWebServer()
-      mockWebServer.start(openSearchProperties.uri.port)
+      mockWebServer.start(openSearchConfig.uri.port)
     }
 
     afterTest {

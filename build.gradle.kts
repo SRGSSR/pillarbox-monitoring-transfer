@@ -33,6 +33,8 @@ dependencies {
   implementation(libs.ktor.client.core)
   implementation(libs.ktor.client.cio)
   implementation(libs.classgraph)
+  implementation(libs.hoplite.core)
+  runtimeOnly(libs.hoplite.yaml)
 
   // Test Dependencies
   testImplementation(libs.kotest.runner.junit5)

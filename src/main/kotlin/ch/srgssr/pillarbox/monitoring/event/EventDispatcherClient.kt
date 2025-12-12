@@ -26,13 +26,13 @@ import org.springframework.stereotype.Service
  *
  * @property eventFlowProvider Provides a reactive flow of incoming [EventRequest]s.
  * @property eventRepository The persistence layer for storing enriched events.
- * @property properties Configuration for the buffer size, cache and batching.
+ * @property config Configuration for the buffer size, cache and batching.
  */
 @Service
 class EventDispatcherClient(
   private val eventFlowProvider: EventFlowProvider,
   private val eventRepository: EventRepository,
-  private val properties: EventDispatcherClientConfiguration,
+  private val config: EventDispatcherClientConfig,
 ) {
   private companion object {
     /**
@@ -41,7 +41,7 @@ class EventDispatcherClient(
     val logger = logger()
   }
 
-  private val sessionCache: LRUCache<String, Any> = LRUCache(properties.cacheSize)
+  private val sessionCache: LRUCache<String, Any> = LRUCache(config.cacheSize)
 
   /**
    * Starts the reactive event processing pipeline.
@@ -62,9 +62,9 @@ class EventDispatcherClient(
       .start()
       .onEach { StatsTracker.increment("incomingEvents") }
       .buffer(
-        capacity = properties.bufferCapacity,
+        capacity = config.bufferCapacity,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
-      ).chunked(properties.saveChunkSize)
+      ).chunked(config.saveChunkSize)
       .onEach { logger.info { "Start processing next ${it.size} events" } }
       .map { events ->
         StatsTracker.increment("nonDroppedEvents", events.size)

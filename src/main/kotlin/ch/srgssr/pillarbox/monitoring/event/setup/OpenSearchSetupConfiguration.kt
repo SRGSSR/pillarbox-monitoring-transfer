@@ -1,6 +1,6 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
-import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
+import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
@@ -18,20 +18,20 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class OpenSearchSetupConfiguration {
   @Bean("openSearchHttpClient")
-  fun openSearchHttpClient(properties: OpenSearchConfigurationProperties): HttpClient =
+  fun openSearchHttpClient(config: OpenSearchConfig): HttpClient =
     HttpClient(CIO) {
       engine {
-        requestTimeout = properties.timeout.toLong() // milliseconds
+        requestTimeout = config.timeoutMillis // milliseconds
       }
 
       install(HttpTimeout) {
-        requestTimeoutMillis = properties.timeout.toLong()
-        connectTimeoutMillis = properties.timeout.toLong()
-        socketTimeoutMillis = properties.timeout.toLong()
+        requestTimeoutMillis = config.timeoutMillis
+        connectTimeoutMillis = config.timeoutMillis
+        socketTimeoutMillis = config.timeoutMillis
       }
 
       defaultRequest {
-        url(properties.uri.toString())
+        url(config.uri.toString())
         contentType(ContentType.Application.Json)
       }
     }

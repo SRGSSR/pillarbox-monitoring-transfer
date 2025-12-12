@@ -1,14 +1,12 @@
 package ch.srgssr.pillarbox.monitoring
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.runApplication
 
 /**
  * Main entry point for the Pillarbox QoS Data Transfer application.
  */
 @SpringBootApplication
-@ConfigurationPropertiesScan
 class PillarboxDataTransferApplication
 
 /**

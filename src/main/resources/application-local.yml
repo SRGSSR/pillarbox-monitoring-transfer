@@ -1,6 +1,6 @@
-pillarbox.monitoring.dispatch:
-  buffer-capacity: 1_000
-  cache-size: 5_000
+dispatcher-client:
+  buffer-capacity: 1000
+  cache-size: 5000
   save-chunk-size: 1
 
 logging.level:

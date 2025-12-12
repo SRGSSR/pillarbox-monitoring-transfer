@@ -1,6 +1,6 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
-import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
+import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfig
 import ch.srgssr.pillarbox.monitoring.test.PillarboxMonitoringTestConfiguration
 import ch.srgssr.pillarbox.monitoring.test.createDispatcher
 import io.kotest.assertions.throwables.shouldThrow
@@ -18,7 +18,7 @@ import org.springframework.test.context.ContextConfiguration
 @ActiveProfiles("test")
 class OpenSearchSetupServiceTest(
   private val openSearchSetupService: OpenSearchSetupService,
-  private val openSearchProperties: OpenSearchConfigurationProperties,
+  private val openSearchConfig: OpenSearchConfig,
   private val resourceLoader: ResourcePatternResolver,
 ) : ShouldSpec({
     var mockWebServer = MockWebServer()
@@ -42,7 +42,7 @@ class OpenSearchSetupServiceTest(
 
     beforeTest {
       mockWebServer = MockWebServer()
-      mockWebServer.start(openSearchProperties.uri.port)
+      mockWebServer.start(openSearchConfig.uri.port)
     }
 
     afterTest {

@@ -14,21 +14,21 @@ class PillarboxMonitoringTestConfiguration {
 
     init {
       openSearchPort = getAvailablePort()
-      System.setProperty("pillarbox.monitoring.opensearch.uri", "http://localhost:$openSearchPort")
-      System.setProperty("pillarbox.monitoring.opensearch.retry.max-attempts", "0")
-      System.setProperty("pillarbox.monitoring.opensearch.retry.initial-interval", "0")
-      System.setProperty("pillarbox.monitoring.opensearch.retry.max-interval", "0")
+      System.setProperty("config.override.open-search.uri", "http://localhost:$openSearchPort")
+      System.setProperty("config.override.open-search.retry.max-attempts", "0")
+      System.setProperty("config.override.open-search.retry.initial-interval", "0s")
+      System.setProperty("config.override.open-search.retry.max-interval", "0s")
 
       seeEventPort = getAvailablePort()
-      System.setProperty("pillarbox.monitoring.dispatch.uri", "http://localhost:$seeEventPort")
-      System.setProperty("pillarbox.monitoring.dispatch.sseRetry.max-attempts", "0")
-      System.setProperty("pillarbox.monitoring.dispatch.sseRetry.initial-interval", "0")
-      System.setProperty("pillarbox.monitoring.dispatch.sseRetry.max-interval", "0")
+      System.setProperty("config.override.dispatcher-client.uri", "http://localhost:$seeEventPort")
+      System.setProperty("config.override.dispatcher-client.sse-retry.max-attempts", "0")
+      System.setProperty("config.override.dispatcher-client.sse-retry.initial-interval", "0s")
+      System.setProperty("config.override.dispatcher-client.sse-retry.max-interval", "0s")
 
       // Register a shutdown hook to release resources if needed
       Runtime.getRuntime().addShutdownHook(
         Thread {
-          System.clearProperty("pillarbox.monitoring.opensearch.uri")
+          System.clearProperty("opensearch.uri")
         },
       )
     }

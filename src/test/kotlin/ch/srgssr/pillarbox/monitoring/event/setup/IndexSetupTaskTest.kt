@@ -1,6 +1,6 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
-import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
+import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfig
 import ch.srgssr.pillarbox.monitoring.io.ResourceLoader
 import ch.srgssr.pillarbox.monitoring.io.filename
 import ch.srgssr.pillarbox.monitoring.test.PillarboxMonitoringTestConfiguration
@@ -21,7 +21,7 @@ import tools.jackson.databind.json.JsonMapper
 @ActiveProfiles("test")
 class IndexSetupTaskTest(
   private val indexSetupTask: IndexSetupTask,
-  private val openSearchProperties: OpenSearchConfigurationProperties,
+  private val openSearchConfig: OpenSearchConfig,
   private val jsonMapper: JsonMapper,
 ) : ShouldSpec({
 
@@ -39,7 +39,7 @@ class IndexSetupTaskTest(
 
     beforeTest {
       mockWebServer = MockWebServer()
-      mockWebServer.start(openSearchProperties.uri.port)
+      mockWebServer.start(openSearchConfig.uri.port)
     }
 
     afterTest {

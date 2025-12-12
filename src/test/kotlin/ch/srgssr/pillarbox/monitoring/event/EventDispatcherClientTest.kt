@@ -23,7 +23,7 @@ class EventDispatcherClientTest :
       EventDispatcherClient(
         eventFlowProvider = mockEventFlowProvider,
         eventRepository = mockEventRepository,
-        properties = EventDispatcherClientConfiguration(),
+        config = EventDispatcherClientConfig(),
       )
 
     beforeTest {

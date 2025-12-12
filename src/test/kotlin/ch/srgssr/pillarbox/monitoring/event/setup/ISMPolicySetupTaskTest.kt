@@ -1,6 +1,6 @@
 package ch.srgssr.pillarbox.monitoring.event.setup
 
-import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfigurationProperties
+import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfig
 import ch.srgssr.pillarbox.monitoring.io.ResourceLoader
 import ch.srgssr.pillarbox.monitoring.io.filename
 import ch.srgssr.pillarbox.monitoring.test.PillarboxMonitoringTestConfiguration
@@ -12,7 +12,6 @@ import io.kotest.matchers.shouldBe
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import tools.jackson.databind.json.JsonMapper
@@ -22,7 +21,7 @@ import tools.jackson.databind.json.JsonMapper
 @ActiveProfiles("test")
 class ISMPolicySetupTaskTest(
   private val ismPolicySetupTask: ISMPolicySetupTask,
-  private val openSearchProperties: OpenSearchConfigurationProperties,
+  private val openSearchConfig: OpenSearchConfig,
   private val jsonMapper: JsonMapper,
 ) : ShouldSpec({
 
@@ -40,7 +39,7 @@ class ISMPolicySetupTaskTest(
 
     beforeTest {
       mockWebServer = MockWebServer()
-      mockWebServer.start(openSearchProperties.uri.port)
+      mockWebServer.start(openSearchConfig.uri.port)
     }
 
     afterTest {

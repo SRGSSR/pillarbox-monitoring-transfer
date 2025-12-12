@@ -22,16 +22,16 @@ import tools.jackson.databind.json.JsonMapper
  * Provides a reactive [Flow] of [EventRequest]s by connecting to a remote Server-Sent Events (SSE) endpoint.
  *
  * This component is responsible for:
- * - Establishing the connection to the SSE endpoint configured in [EventDispatcherClientConfiguration].
+ * - Establishing the connection to the SSE endpoint configured in [EventDispatcherClientConfig].
  * - Mapping the SSE stream to a stream of [EventRequest] objects.
  * - Applying retry logic in case of transient failures, with support for logging retry attempts.
  *
- * @property properties The SSE client configuration including URI and retry strategy.
+ * @property config The SSE client configuration including URI and retry strategy.
  * @property jsonMapper Jackson's [JsonMapper] used to serialize event objects.
  */
 @Component
 class EventFlowProvider(
-  private val properties: EventDispatcherClientConfiguration,
+  private val config: EventDispatcherClientConfig,
   private val jsonMapper: JsonMapper,
 ) {
   private companion object {
@@ -46,7 +46,7 @@ class EventFlowProvider(
       install(SSE)
 
       defaultRequest {
-        url(properties.uri.toString())
+        url(config.uri.toString())
         contentType(ContentType.Application.Json)
       }
     }
@@ -76,7 +76,7 @@ class EventFlowProvider(
         httpClient.close()
       }
     }.retryWhen(
-      properties.sseRetry.toRetryWhen(
+      config.sseRetry.toRetryWhen(
         onRetry = { cause, attempt, delayMillis ->
           logger.warn(cause) {
             "Retrying after failure: ${cause.message}. Attempt ${attempt + 1}. Waiting for ${delayMillis}ms"
