@@ -11,7 +11,7 @@ import java.time.Duration
  * @property initialInterval The initial interval between retry attempts. Defaults to 5 seconds.
  * @property maxInterval The maximum interval between retry attempts. Defaults to 1 minute.
  */
-data class RetryProperties(
+data class RetryConfig(
   val maxAttempts: Long = 5,
   val initialInterval: Duration = Duration.ofSeconds(5),
   val maxInterval: Duration = Duration.ofMinutes(1),

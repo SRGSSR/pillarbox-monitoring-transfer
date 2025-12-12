@@ -35,8 +35,8 @@ clients, enabling data visualization and insights through tools like Grafana.
 3. Configuration:
    The application can be configured using environment variables:
    ```bash
-   export PILLARBOX_MONITORING_OPENSEARCH_URI=http://opensearch:9200
-   export PILLARBOX_MONITORING_DISPATCH_URI=http://event-dispatcher:8080/events
+   export config__override__open-search__uri=http://opensearch:9200
+   export config__override__dispatcher-client__uri=http://event-dispatcher:8080/events
    ```
 
 **Running with Docker**
@@ -51,8 +51,8 @@ Alternatively, you can build and run the application using Docker:
 2. Run the Docker Container:
    ```bash
    docker run -p 8081:8081 \
-              -e PILLARBOX_MONITORING_OPENSEARCH_URI=http://opensearch:9200 \
-              -e PILLARBOX_MONITORING_DISPATCH_URI=http://event-dispatcher:8080/events \
+              -e config__override__open-search__uri=http://opensearch:9200 \
+              -e config__override__dispatcher-client__uri=http://event-dispatcher:8080/events \
               pillarbox-monitoring-transfer
    ```
 

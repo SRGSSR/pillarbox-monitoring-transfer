@@ -10,6 +10,7 @@ kover = "0.9.3"
 versions-plugin = "0.53.0"
 
 # Libs
+hoplite = "2.9.0"
 yauaa = "7.32.0"
 ktor = "3.3.2"
 kotest = "5.9.1"
@@ -28,6 +29,8 @@ yauaa = { module = "nl.basjes.parse.useragent:yauaa", version.ref = "yauaa" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
+hoplite-core = { module = "com.sksamuel.hoplite:hoplite-core", version.ref = "hoplite" }
+hoplite-yaml = { module = "com.sksamuel.hoplite:hoplite-yaml", version.ref = "hoplite" }
 
 # Tests
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
