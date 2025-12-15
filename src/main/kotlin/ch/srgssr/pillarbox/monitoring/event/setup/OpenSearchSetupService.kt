@@ -33,7 +33,7 @@ class OpenSearchSetupService(
   private val properties: OpenSearchConfigurationProperties,
 ) {
   private companion object {
-    private val logger = logger()
+    val logger = logger()
   }
 
   /**

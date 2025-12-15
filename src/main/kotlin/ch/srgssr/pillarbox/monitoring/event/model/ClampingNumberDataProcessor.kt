@@ -11,9 +11,9 @@ import java.math.BigInteger
  * to within the range of [Long.MIN_VALUE] and [Long.MAX_VALUE]. Other value types are passed through unchanged.
  */
 internal class ClampingNumberDataProcessor : DataProcessor {
-  companion object {
-    private val MAX_LONG_AS_BIGINT = BigInteger.valueOf(Long.MAX_VALUE)
-    private val MIN_LONG_AS_BIGINT = BigInteger.valueOf(Long.MIN_VALUE)
+  private companion object {
+    val MAX_LONG_AS_BIGINT: BigInteger = BigInteger.valueOf(Long.MAX_VALUE)
+    val MIN_LONG_AS_BIGINT: BigInteger = BigInteger.valueOf(Long.MIN_VALUE)
   }
 
   @Suppress("UNCHECKED_CAST")

@@ -38,7 +38,7 @@ class EventDispatcherClient(
     /**
      * Logger instance for logging within this service.
      */
-    private val logger = logger()
+    val logger = logger()
   }
 
   private val sessionCache: LRUCache<String, Any> = LRUCache(properties.cacheSize)

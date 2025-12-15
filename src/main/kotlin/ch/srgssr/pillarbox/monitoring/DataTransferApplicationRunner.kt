@@ -30,7 +30,7 @@ class DataTransferApplicationRunner(
   private val terminationService: TerminationService,
 ) : ApplicationRunner {
   private companion object {
-    private val logger = logger()
+    val logger = logger()
   }
 
   /**

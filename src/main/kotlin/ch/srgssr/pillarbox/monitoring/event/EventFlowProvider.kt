@@ -38,7 +38,7 @@ class EventFlowProvider(
     /**
      * Logger instance for logging within this service.
      */
-    private val logger = logger()
+    val logger = logger()
   }
 
   private val httpClient =

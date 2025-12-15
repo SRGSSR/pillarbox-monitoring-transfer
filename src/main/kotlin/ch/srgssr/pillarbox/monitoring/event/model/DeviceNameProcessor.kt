@@ -10,12 +10,12 @@ import ch.srgssr.pillarbox.monitoring.io.useLines
  * and applies it to incoming event data.
  */
 class DeviceNameProcessor : DataProcessor {
-  companion object {
+  private companion object {
     /**
      * Map of device models to human-readable device names.
      * Source: https://gist.github.com/adamawolf/3048717
      */
-    private val mappings: Map<String, String> =
+    val mappings: Map<String, String> =
       ResourceLoader.getResource("mappings/device-name.txt").useLines { lines ->
         lines
           .map { it.trim().split(":", limit = 2) }

@@ -37,7 +37,7 @@ class IndexTemplateSetupTask(
     /**
      * Logger instance for logging within this task.
      */
-    private val logger = logger()
+    val logger = logger()
   }
 
   /**

@@ -11,8 +11,8 @@ import nl.basjes.parse.useragent.UserAgentAnalyzer
  * It also determines whether the user agent belongs to a robot.
  */
 internal class UserAgentProcessor : DataProcessor {
-  companion object {
-    private val userAgentAnalyzer =
+  private companion object {
+    val userAgentAnalyzer: UserAgentAnalyzer =
       UserAgentAnalyzer
         .newBuilder()
         .hideMatcherLoadStats()

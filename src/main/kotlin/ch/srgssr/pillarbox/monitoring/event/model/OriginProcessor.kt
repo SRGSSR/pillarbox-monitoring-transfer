@@ -14,16 +14,16 @@ import java.net.URISyntaxException
  * - Provides a shortened representation of the media origin (host + first path segment).
  */
 internal class OriginProcessor : DataProcessor {
-  companion object {
+  private companion object {
     /**
      * The pattern to detect embedded origins
      */
-    private val pattern = Regex(".*/play/embed(?:[?]|/).*")
+    val pattern = Regex(".*/play/embed(?:[?]|/).*")
 
     /**
      * Logger instance for logging within this processor.
      */
-    private val logger = logger()
+    val logger = logger()
   }
 
   /**

@@ -16,7 +16,7 @@ class BenchmarkScheduledLogger {
     /**
      * Logger instance for logging within this component.
      */
-    private val logger = logger()
+    val logger = logger()
   }
 
   /**
