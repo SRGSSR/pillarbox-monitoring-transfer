@@ -8,7 +8,7 @@ package ch.srgssr.pillarbox.monitoring.event.model
  * - Flags whether the media is provided by SwissTXT.
  */
 internal class MediaIdProcessor : DataProcessor {
-  companion object {
+  private companion object {
     val swisstxtPattern = Regex("^urn:(?:.*:)?swisstxt:.*$")
   }
 
