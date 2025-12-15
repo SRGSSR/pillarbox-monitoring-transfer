@@ -31,7 +31,7 @@ class BenchmarkScheduledLogger {
       while (isActive) {
         logger.info { "Benchmark averages: ${TimeTracker.averages}" }
         logger.info { "Latest stats per minute: ${StatsTracker.getAndResetAll()}" }
-        delay(1_000L)
+        delay(60_000L)
       }
     }
 }
