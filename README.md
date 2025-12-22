@@ -25,7 +25,7 @@ clients, enabling data visualization and insights through tools like Grafana.
 
 - Using Gradle:
   ```bash
-  ./gradlew bootRun
+  ./gradlew run
   ```
 - Or, using the built JAR:
   ```bash
@@ -165,11 +165,11 @@ This project is licensed under the [MIT License](LICENSE).
 
 [main-entry-point]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/PillarboxDataTransferApplication.kt
 
-[setup-service]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/setup/OpenSearchSetupService.kt
+[setup-service]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/dispatcher/setup/OpenSearchSetupService.kt
 
-[sse-client]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/EventDispatcherClient.kt
+[sse-client]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/dispatcher/EventDispatcherClient.kt
 
 [lru-cache]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/cache/LRUCache.kt
 
-[data-converter]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/event/model/EventRequestDataConverter.kt
+[data-converter]: src/main/kotlin/ch/srgssr/pillarbox/monitoring/dispatcher/model/EventRequestDataConverter.kt
 
