@@ -1,11 +1,12 @@
 package ch.srgssr.pillarbox.monitoring.config
 
-import ch.srgssr.pillarbox.monitoring.event.EventDispatcherClientConfig
-import ch.srgssr.pillarbox.monitoring.event.repository.OpenSearchConfig
+import ch.srgssr.pillarbox.monitoring.dispatcher.EventDispatcherClientConfig
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
+import ch.srgssr.pillarbox.monitoring.opensearch.OpenSearchConfig
 import com.sksamuel.hoplite.ConfigException
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.addResourceSource
 
 /**
@@ -27,12 +28,14 @@ object ConfigLoader {
    * @return a fully resolved [AppConfig] instance.
    * @throws IllegalStateException if Hoplite throws a [ConfigException].
    */
+  @OptIn(ExperimentalHoplite::class)
   fun load(vararg profiles: String): AppConfig {
     val loader =
       ConfigLoaderBuilder
         .default()
         .apply {
-          addResourceSource("/application.yml")
+          withExplicitSealedTypes()
+          addResourceSource("/application.yml", optional = true)
           profiles.forEach { addResourceSource("/application-$it.yml", optional = true) }
         }.build()
 

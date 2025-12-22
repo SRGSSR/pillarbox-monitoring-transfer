@@ -1,6 +1,0 @@
-spring:
-  main.web-application-type: none
-  threads.virtual.enabled: true
-  application.name: pillarbox-monitoring-transfer
-  jackson.deserialization:
-    fail-on-null-for-primitives: true

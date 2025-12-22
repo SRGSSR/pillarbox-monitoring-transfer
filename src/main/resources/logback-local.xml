@@ -1,0 +1,3 @@
+<configuration>
+  <logger name="ch.srgssr.pillarbox.monitoring" level="TRACE"/>
+</configuration>

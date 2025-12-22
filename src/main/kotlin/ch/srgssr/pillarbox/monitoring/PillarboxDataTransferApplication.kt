@@ -1,20 +1,26 @@
 package ch.srgssr.pillarbox.monitoring
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
+import ch.srgssr.pillarbox.monitoring.config.ActiveProfile
+import ch.srgssr.pillarbox.monitoring.log.logger
+import kotlinx.coroutines.runBlocking
+import org.koin.core.context.startKoin
+import org.koin.logger.slf4jLogger
+import kotlin.time.measureTimedValue
 
 /**
- * Main entry point for the Pillarbox QoS Data Transfer application.
+ * The main function that starts the application.
  */
-@SpringBootApplication
-class PillarboxDataTransferApplication
+fun main() =
+  runBlocking {
+    val (koin, elapsed) =
+      measureTimedValue {
+        startKoin {
+          slf4jLogger()
+          modules(dataTransferModule(ActiveProfile.name))
+        }.koin
+      }
 
-/**
- * The main function that starts the Spring Boot application.
- *
- * @param args Command-line arguments passed to the application.
- */
-@Suppress("SpreadOperator")
-fun main(args: Array<String>) {
-  runApplication<PillarboxDataTransferApplication>(*args)
-}
+    logger().info("Application started in $elapsed")
+
+    koin.get<DataTransferApplicationRunner>().run()
+  }
