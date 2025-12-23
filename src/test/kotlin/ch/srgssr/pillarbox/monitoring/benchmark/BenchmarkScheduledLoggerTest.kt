@@ -9,12 +9,11 @@ import kotlinx.coroutines.test.runTest
 @OptIn(ExperimentalCoroutinesApi::class)
 class BenchmarkScheduledLoggerTest :
   ShouldSpec({
-    val logger = BenchmarkScheduledLogger()
 
     should("run one scheduled iteration without throwing") {
       runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
-        val job = logger.start(dispatcher)
+        val job = BenchmarkScheduledLogger.start(dispatcher)
         advanceTimeBy(1_000)
         job.cancel()
       }

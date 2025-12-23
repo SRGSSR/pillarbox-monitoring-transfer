@@ -2,6 +2,3 @@ dispatcher-client:
   buffer-capacity: 1000
   cache-size: 5000
   save-chunk-size: 1
-
-logging.level:
-  ch.srgssr.pillarbox.monitoring: TRACE

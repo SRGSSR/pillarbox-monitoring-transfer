@@ -2,14 +2,14 @@ import org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN
 import java.util.Properties
 
 plugins {
-  alias(libs.plugins.kotlin.jvm)
-  alias(libs.plugins.kotlin.spring)
-  alias(libs.plugins.spring.boot)
-  alias(libs.plugins.spring.dependency.management)
   alias(libs.plugins.detekt)
-  alias(libs.plugins.ktlint)
+  alias(libs.plugins.kotlin.jvm)
   alias(libs.plugins.kover)
+  alias(libs.plugins.ktlint)
+  alias(libs.plugins.shadow)
   alias(libs.plugins.versions)
+
+  application
 }
 
 group = "ch.srgssr.pillarbox"
@@ -26,25 +26,30 @@ repositories {
 
 dependencies {
   // Dependencies
-  implementation(libs.spring.boot.starter.json)
-  implementation(libs.kotlin.reflect)
-  implementation(libs.yauaa)
-  implementation(libs.kotlin.coroutines.core)
-  implementation(libs.ktor.client.core)
-  implementation(libs.ktor.client.cio)
   implementation(libs.classgraph)
   implementation(libs.hoplite.core)
+  implementation(libs.jackson.module.kotlin)
+  implementation(libs.koin.core)
+  implementation(libs.koin.logger)
+  implementation(libs.kotlin.coroutines.core.jvm)
+  implementation(libs.ktor.client.cio)
+  implementation(libs.ktor.client.core)
+  implementation(libs.logback.classic)
+  implementation(libs.yauaa)
   runtimeOnly(libs.hoplite.yaml)
+  runtimeOnly(libs.log4j.to.slf4j)
 
   // Test Dependencies
+  testImplementation(libs.koin.test)
+  testImplementation(libs.kotest.extensions.koin) {
+    exclude(group = "io.insert-koin", module = "koin-core")
+    exclude(group = "io.insert-koin", module = "koin-test")
+  }
   testImplementation(libs.kotest.runner.junit5)
-  testImplementation(libs.spring.boot.starter.test)
-  testImplementation(libs.kotest.extensions.spring)
-  testImplementation(libs.kotlin.test.junit5)
+  testImplementation(libs.kotlin.coroutines.test)
   testImplementation(libs.mockk)
   testImplementation(libs.mockwebserver)
   testImplementation(libs.okhttp)
-  testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 kotlin {
@@ -75,17 +80,13 @@ ktlint {
   }
 }
 
-tasks.jar.configure {
-  enabled = false
+application {
+  mainClass.set("$group.monitoring.PillarboxDataTransferApplicationKt")
 }
 
-tasks.bootJar.configure {
-  val archiveFileName =
-    archiveBaseName.zip(archiveExtension) { baseName, extension ->
-      "$baseName.$extension"
-    }
-  this.archiveFileName.set(archiveFileName)
-  layered { enabled = true }
+tasks.shadowJar {
+  archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
+  manifest { attributes["Main-Class"] = application.mainClass.get() }
 }
 
 tasks.withType<Test> {

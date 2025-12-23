@@ -7,21 +7,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.springframework.stereotype.Component
 import kotlin.coroutines.CoroutineContext
 
 /**
  * A scheduled logger that periodically logs the average execution times
  * and stats regarding the number of processed events.
  */
-@Component
-class BenchmarkScheduledLogger {
-  private companion object {
-    /**
-     * Logger instance for logging within this component.
-     */
-    val logger = logger()
-  }
+object BenchmarkScheduledLogger {
+  private val logger = logger()
 
   /**
    * The scheduled logging function, executes every minute.

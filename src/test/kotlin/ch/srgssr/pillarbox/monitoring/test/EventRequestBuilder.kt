@@ -1,6 +1,6 @@
 package ch.srgssr.pillarbox.monitoring.test
 
-import ch.srgssr.pillarbox.monitoring.event.model.EventRequest
+import ch.srgssr.pillarbox.monitoring.opensearch.model.EventRequest
 import java.time.Instant
 import java.util.UUID
 
