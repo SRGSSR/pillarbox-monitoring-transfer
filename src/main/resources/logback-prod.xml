@@ -1,3 +1,3 @@
 <configuration>
-  <logger name="ch.srgssr.pillarbox.monitoring.event.model" level="ERROR"/>
+  <logger name="ch.srgssr.pillarbox.monitoring.opensearch.model" level="ERROR"/>
 </configuration>
