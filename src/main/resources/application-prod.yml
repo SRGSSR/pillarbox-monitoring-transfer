@@ -1,4 +1,4 @@
 dispatcher-client:
-  buffer-capacity: 30_000
-  cache-size: 200_000
-  save-chunk-size: 6_000
+  buffer-capacity: 30000
+  cache-size: 200000
+  save-chunk-size: 6000
