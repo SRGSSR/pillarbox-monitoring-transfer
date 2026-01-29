@@ -194,7 +194,7 @@ class ErrorProcessorTest :
           "user_ip": "127.0.0.1",
           "version": 1,
           "data": {
-            "name": "CoreMediaErrorDomain(-1)"
+            "name": "Unknown(-1)"
           }
         }
         """.trimIndent()
@@ -209,6 +209,34 @@ class ErrorProcessorTest :
       // Then: The error should be classified correctly
       val dataNode = eventRequest.data as Map<*, *>
       dataNode["error_type"] shouldBe "UNKNOWN_ERROR"
+    }
+
+    should("respect error resolution priority for multiple matches for iOS errors") {
+      // Given: an input with a predefined error message
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "ERROR",
+          "timestamp": 1630000000000,
+          "user_ip": "127.0.0.1",
+          "version": 1,
+          "data": {
+            "name": "AVFoundationErrorDomain(-11870)"
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest =
+        jsonMapper.readValue(
+          jsonInput,
+          EventRequest::class.java,
+        )
+
+      // Then: The error should be classified correctly
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["error_type"] shouldBe "DRM_ERROR"
     }
 
     should("classify Android errors correctly based on the predefined patterns") {

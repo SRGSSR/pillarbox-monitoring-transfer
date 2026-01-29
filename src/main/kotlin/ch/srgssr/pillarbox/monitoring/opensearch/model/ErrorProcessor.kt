@@ -117,34 +117,52 @@ internal enum class WebPlayerErrorType(
  * Enum representing various error categories for the iOS player.
  */
 internal enum class IOSPlayerErrorType(
-  vararg val matches: String,
+  vararg matches: String,
+  private val priority: Int = 0,
 ) {
   /**
    * Failure when calling the Integration Layer API.
    */
-  IL_ERROR("PillarboxCoreBusiness.DataError(1)"),
+  IL_ERROR("PillarboxCoreBusiness\\.DataError\\(1\\)", priority = 10),
+
+  /**
+   * Failure to decrypt or decode DRM-protected content.
+   */
+  DRM_ERROR("AVFoundationErrorDomain\\(-11870\\)", priority = 10),
 
   /**
    * Error loading or decoding the media resource.
    */
   PLAYBACK_MEDIA_SOURCE_ERROR(
-    "CoreMediaErrorDomain(1)",
-    "CoreMediaErrorDomain(-12648)",
-    "CoreMediaErrorDomain(-16839)",
+    "AVFoundationErrorDomain\\(.*?\\)",
+    "CoreMediaErrorDomain\\(.*?\\)",
+    "NSCocoaErrorDomain\\(.*?\\)",
   ),
 
   /**
    * A network error occurred during playback.
    */
-  PLAYBACK_NETWORK_ERROR("NSURLErrorDomain(-1008)"),
+  PLAYBACK_NETWORK_ERROR("NSURLErrorDomain\\(.*?\\)"),
+
+  /**
+   * The user experienced a connection problem to the remote API or the media resource.
+   */
+  CONECTION_ERROR("NSURLErrorDomain\\(-1009\\)", priority = 10),
   ;
+
+  private val matches = matches.map { Regex(it, RegexOption.IGNORE_CASE) }
 
   companion object {
     /**
      * Apple player errors are categorized directly by their `name` field, which indicates the type of failure.
      *
-     * This function trims and compares the provided `name` against a list of known error type aliases.
+     * This function trims and compares the provided `name` against a list of known error type patterns.
      * The first matching type (case-insensitive) is returned.
+     *
+     * In addition, each error type has an assigned priority weight. When multiple error
+     * patterns match, the function first compares their priorities: higher priority errors
+     * always take precedence over lower priority ones. If two errors share the same priority,
+     * the one that occurs furthest down the log is chosen.
      *
      * @param data A map expected to contain a "name" key corresponding to the iOS error identifier.
      *
@@ -154,9 +172,10 @@ internal enum class IOSPlayerErrorType(
       (data["name"] as? String)?.let { rawName ->
         val name = rawName.trim()
         entries
-          .firstOrNull { type ->
-            type.matches.any { it.equals(name, true) }
-          }?.name
+          .filter { type ->
+            type.matches.any { it.matches(name) }
+          }.maxByOrNull { it.priority }
+          ?.name
       }
   }
 }
@@ -165,36 +184,52 @@ internal enum class IOSPlayerErrorType(
  * Enum representing various error categories for the Android player.
  */
 internal enum class AndroidPlayerErrorType(
-  pattern: String,
-  vararg val names: String,
+  logPatterns: List<String>,
+  val names: List<String> = emptyList(),
 ) {
   /**
    * Failure to decrypt or decode DRM-protected content.
    */
-  DRM_ERROR("drm"),
+  DRM_ERROR(listOf("drm")),
 
   /**
    * Failure when calling the Integration Layer API.
    */
-  IL_ERROR("SRGAssetLoader\\.loadAsset", "HttpResultException", "IOException"),
+  IL_ERROR(
+    listOf("SRGAssetLoader\\.loadAsset"),
+    listOf("HttpResultException", "IOException"),
+  ),
 
   /**
    * The media format is not supported on the current device or browser.
    */
-  PLAYBACK_UNSUPPORTED_MEDIA("SRGAssetLoader\\.loadAsset", "ResourceNotFoundException"),
+  PLAYBACK_UNSUPPORTED_MEDIA(
+    listOf("SRGAssetLoader\\.loadAsset"),
+    listOf("ResourceNotFoundException"),
+  ),
 
   /**
    * A network error occurred during playback.
    */
-  PLAYBACK_NETWORK_ERROR("^androidx\\.media3\\.exoplayer\\..*timeout"),
+  PLAYBACK_NETWORK_ERROR(
+    listOf(
+      "^androidx\\.media3\\.datasource\\.HttpDataSource",
+      "^androidx\\.media3\\.exoplayer\\..*timeout",
+    ),
+  ),
 
   /**
    * Error loading or decoding the media resource.
    */
-  PLAYBACK_MEDIA_SOURCE_ERROR("^androidx\\.media3\\.exoplayer\\.(?!.*timeout)"),
+  PLAYBACK_MEDIA_SOURCE_ERROR(
+    listOf(
+      "^androidx\\.media3\\.common\\.ParserException",
+      "^androidx\\.media3\\.exoplayer\\.(?!.*timeout)",
+    ),
+  ),
   ;
 
-  val pattern = Regex(pattern)
+  val logPatterns = logPatterns.map { Regex(it) }
 
   companion object {
     /**
@@ -217,10 +252,11 @@ internal enum class AndroidPlayerErrorType(
       (data["log"] as? String)
         ?.let { log ->
           val name = data["name"] as? String ?: ""
-          entries.firstOrNull { type ->
-            (type.names.isEmpty() || type.names.any { it.equals(name, true) }) &&
-              type.pattern.containsMatchIn(log)
-          }
-        }?.name
+          entries
+            .firstOrNull { type ->
+              (type.names.isEmpty() || type.names.any { it.equals(name, true) }) &&
+                type.logPatterns.any { it.containsMatchIn(log) }
+            }?.name
+        }
   }
 }
