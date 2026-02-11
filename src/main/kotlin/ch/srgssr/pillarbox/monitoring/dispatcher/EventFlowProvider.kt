@@ -6,6 +6,7 @@ import ch.srgssr.pillarbox.monitoring.log.warn
 import ch.srgssr.pillarbox.monitoring.opensearch.model.EventRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.plugins.sse.sse
@@ -42,6 +43,10 @@ class EventFlowProvider(
   private val httpClient =
     HttpClient(CIO) {
       install(SSE)
+      install(HttpTimeout) {
+        requestTimeoutMillis = config.sseTimeout
+        socketTimeoutMillis = config.sseTimeout
+      }
 
       defaultRequest {
         url(config.uri.toString())

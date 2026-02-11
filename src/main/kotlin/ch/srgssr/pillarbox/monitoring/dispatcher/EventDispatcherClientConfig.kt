@@ -17,5 +17,6 @@ data class EventDispatcherClientConfig(
   val cacheSize: Int = 200_000,
   val bufferCapacity: Int = 30_000,
   val saveChunkSize: Int = 6_000,
+  val sseTimeout: Long = 60_000,
   val sseRetry: RetryConfig = RetryConfig(),
 )

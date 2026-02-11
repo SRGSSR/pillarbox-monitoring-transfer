@@ -5,17 +5,17 @@ import ch.srgssr.pillarbox.monitoring.benchmark.timed
 import ch.srgssr.pillarbox.monitoring.cache.LRUCache
 import ch.srgssr.pillarbox.monitoring.exception.HttpClientException
 import ch.srgssr.pillarbox.monitoring.flow.chunked
+import ch.srgssr.pillarbox.monitoring.log.error
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
 import ch.srgssr.pillarbox.monitoring.log.trace
 import ch.srgssr.pillarbox.monitoring.opensearch.model.EventRequest
 import ch.srgssr.pillarbox.monitoring.opensearch.repository.EventRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
@@ -55,7 +55,7 @@ class EventDispatcherClient(
    *
    * This method launches the flow in a background coroutine and returns the running [Job].
    */
-  fun start(): Job =
+  suspend fun start() =
     eventFlowProvider
       .start()
       .onEach { StatsTracker.increment("incomingEvents") }
@@ -86,7 +86,10 @@ class EventDispatcherClient(
         startEvents + nonStartEvents
       }.onEach { logger.info { "Adding ${it.size} events to next save batch" } }
       .onEach { this.saveEvents(it) }
-      .launchIn(CoroutineScope(Dispatchers.Default))
+      .catch { e ->
+        logger.error(e) { "Terminal failure in event pipeline: ${e.message}" }
+        throw e
+      }.collect()
 
   @Suppress("TooGenericExceptionCaught")
   private suspend fun saveEvents(events: List<EventRequest>) {

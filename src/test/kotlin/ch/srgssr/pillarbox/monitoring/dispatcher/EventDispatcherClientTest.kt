@@ -41,8 +41,7 @@ class EventDispatcherClientTest :
 
       every { mockEventFlowProvider.start() } returns flowOf(event)
 
-      val job = dispatcherClient.start()
-      job.join()
+      dispatcherClient.start()
 
       val slot = slot<List<EventRequest>>()
       coVerify { mockEventRepository.saveAll(capture(slot)) }
@@ -76,8 +75,7 @@ class EventDispatcherClientTest :
 
       every { mockEventFlowProvider.start() } returns flowOf(start, error)
 
-      val job = dispatcherClient.start()
-      job.join()
+      dispatcherClient.start()
 
       val slot = slot<List<EventRequest>>()
       coVerify { mockEventRepository.saveAll(capture(slot)) }
