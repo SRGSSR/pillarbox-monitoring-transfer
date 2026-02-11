@@ -2,10 +2,10 @@
 
 ![Pillarbox logo](docs/README-images/logo.jpg)
 
-Pillarbox Monitoring Transfer is a Kotlin-based Spring Boot service that connects to the Pillarbox
-Monitoring Event Dispatcher SSE (Server-Sent Events) endpoint and publishes the received events to
-an OpenSearch storage. This facilitates the collection and analysis of monitoring events from
-clients, enabling data visualization and insights through tools like Grafana.
+Pillarbox Monitoring Transfer is a Kotlin-based service that connects to the Pillarbox Monitoring
+Event Dispatcher SSE (Server-Sent Events) endpoint and publishes the received events to an
+OpenSearch storage. This facilitates the collection and analysis of monitoring events from clients,
+enabling data visualization and insights through tools like Grafana.
 
 ## Quick Guide
 
@@ -58,8 +58,8 @@ Alternatively, you can build and run the application using Docker:
 
 ## Documentation
 
-This project is a Kotlin-based Spring Boot application designed to connect to a Server-Sent Events (
-SSE) endpoint, process incoming events, and store data in an OpenSearch index.
+This project is a Kotlin-based application designed to connect to a Server-Sent Events (SSE)
+endpoint, process incoming events, and store data in an OpenSearch index.
 
 ### System Flow Overview
 
@@ -101,8 +101,6 @@ system:
   managing retries in case of connection failures.
 - [EventRequestDataConverter.kt][data-converter]: Enriches and transforms incoming events using
   registered data processors (e.g. user-agent resolution, error classification, etc.).
-
-Here’s a more concise description of the GitHub Actions setup without listing the steps:
 
 ### Continuous Integration
 
