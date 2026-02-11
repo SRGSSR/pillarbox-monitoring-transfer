@@ -2,6 +2,7 @@ package ch.srgssr.pillarbox.monitoring
 
 import ch.srgssr.pillarbox.monitoring.benchmark.BenchmarkScheduledLogger
 import ch.srgssr.pillarbox.monitoring.dispatcher.EventDispatcherClient
+import ch.srgssr.pillarbox.monitoring.log.error
 import ch.srgssr.pillarbox.monitoring.log.logger
 import ch.srgssr.pillarbox.monitoring.opensearch.setup.OpenSearchSetupService
 
@@ -36,7 +37,10 @@ class DataTransferApplicationRunner(
     val benchmarkJob = BenchmarkScheduledLogger.start()
     try {
       logger.info("All setup tasks are completed, starting SSE client...")
-      eventDispatcherClient.start().join()
+      eventDispatcherClient.start()
+    } catch (e: Exception) {
+      logger.error(e) { "Application runner failed during event processing" }
+      throw e
     } finally {
       benchmarkJob.cancel()
     }

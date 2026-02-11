@@ -32,7 +32,7 @@ class DataTransferApplicationRunnerTest :
     should("run OpenSearch setup and start the event dispatcher client") {
       val mockDispatcherJob = mockk<Job>()
       coEvery { mockOpenSearchSetup.start() } just Runs
-      every { mockDispatcherClient.start() } returns mockDispatcherJob
+      coEvery { mockDispatcherClient.start() } just Runs
       coEvery { mockDispatcherJob.join() } just Runs
       mockkObject(BenchmarkScheduledLogger)
 
@@ -68,10 +68,8 @@ class DataTransferApplicationRunnerTest :
     }
 
     should("cancel the benchmark job if the event dispatcher client fails") {
-      val mockDispatcherJob = mockk<Job>()
       coEvery { mockOpenSearchSetup.start() } just Runs
-      every { mockDispatcherClient.start() } returns mockDispatcherJob
-      coEvery { mockDispatcherJob.join() } throws RuntimeException("fail")
+      coEvery { mockDispatcherClient.start() } throws RuntimeException("fail")
       mockkObject(BenchmarkScheduledLogger)
 
       val benchmarkJob = mockk<Job>()
