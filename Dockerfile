@@ -18,4 +18,4 @@ VOLUME /tmp
 # Copy the built JAR file from the build stage
 COPY --from=build /app/build/libs/app.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dsun.net.inetaddr.ttl=5 -Dsun.net.inetaddr.negative.ttl=10 -XX:+UseContainerSupport --add-opens java.base/java.math=ALL-UNNAMED -jar /app.jar"]
