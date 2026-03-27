@@ -1,0 +1,38 @@
+version: 2
+updates:
+  # --- GitHub Actions ---
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      action-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # --- Gradle ---
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      gradle-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "org.jetbrains.kotlin.*"
+        update-types:
+          - "minor"
+          - "patch"
+      gradle-kotlin:
+        patterns:
+          - "org.jetbrains.kotlin.*"
+        update-types:
+          - "minor"
+          - "patch"
+      gradle-wrapper:
+        patterns:
+          - "org.gradle:gradle-wrapper"
