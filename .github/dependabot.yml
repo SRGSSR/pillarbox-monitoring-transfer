@@ -24,6 +24,7 @@ updates:
           - "*"
         exclude-patterns:
           - "org.jetbrains.kotlin.*"
+          - "org.gradle:gradle-wrapper"
         update-types:
           - "minor"
           - "patch"
@@ -33,6 +34,3 @@ updates:
         update-types:
           - "minor"
           - "patch"
-      gradle-wrapper:
-        patterns:
-          - "org.gradle:gradle-wrapper"
