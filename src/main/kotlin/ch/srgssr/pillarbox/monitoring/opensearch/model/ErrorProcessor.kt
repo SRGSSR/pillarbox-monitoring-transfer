@@ -11,7 +11,7 @@ internal class ErrorProcessor : DataProcessor {
   override fun shouldProcess(
     eventName: String,
     data: Map<String, Any?>,
-  ): Boolean = eventName == "ERROR" && (data["business_error"] as? Boolean != true)
+  ): Boolean = eventName == "ERROR" && (data["business_error"] != true)
 
   /**
    * Processes the given data node to determine the type of error based on the logs:
