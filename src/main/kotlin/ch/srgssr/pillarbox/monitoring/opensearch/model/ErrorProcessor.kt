@@ -142,12 +142,12 @@ internal enum class IOSPlayerErrorType(
   /**
    * A network error occurred during playback.
    */
-  PLAYBACK_NETWORK_ERROR("NSURLErrorDomain\\(.*?\\)"),
+  PLAYBACK_NETWORK_ERROR("NSURLErrorDomain\\(.*?\\)", "kCFErrorDomainCFNetwork\\(.*?\\)"),
 
   /**
    * The user experienced a connection problem to the remote API or the media resource.
    */
-  CONECTION_ERROR("NSURLErrorDomain\\(-1009\\)", priority = 10),
+  CONNECTION_ERROR("NSURLErrorDomain\\(-100(5|9)\\)", "kCFErrorDomainCFNetwork\\(-100(5|9)\\)", priority = 10),
   ;
 
   private val matches = matches.map { Regex(it, RegexOption.IGNORE_CASE) }
