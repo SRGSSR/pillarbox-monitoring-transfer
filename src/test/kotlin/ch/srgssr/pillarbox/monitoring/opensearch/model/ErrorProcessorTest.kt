@@ -296,6 +296,37 @@ class ErrorProcessorTest :
       dataNode["error_type"] shouldBe "CONNECTION_ERROR"
     }
 
+    listOf(
+      "kCFErrorDomainCFNetwork(-1200)" to "PLAYBACK_NETWORK_ERROR",
+      "kCFErrorDomainCFNetwork(-1009)" to "CONNECTION_ERROR",
+      "kCFErrorDomainCFNetwork(-1005)" to "CONNECTION_ERROR",
+      "NSURLErrorDomain(-1005)" to "CONNECTION_ERROR",
+    ).forEach { (name, expectedErrorType) ->
+      should("classify iOS $name errors as $expectedErrorType") {
+        val jsonInput =
+          """
+          {
+            "session_id": "12345",
+            "event_name": "ERROR",
+            "timestamp": 1630000000000,
+            "user_ip": "127.0.0.1",
+            "version": 1,
+            "data": {
+              "name": "$name"
+            }
+          }
+          """.trimIndent()
+        val eventRequest =
+          jsonMapper.readValue(
+            jsonInput,
+            EventRequest::class.java,
+          )
+
+        val dataNode = eventRequest.data as Map<*, *>
+        dataNode["error_type"] shouldBe expectedErrorType
+      }
+    }
+
     should("Classify IL_ERROR correctly") {
       // Given: an input with a predefined error message
       val jsonInput =
