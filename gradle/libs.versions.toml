@@ -11,7 +11,7 @@ versions-plugin = "0.53.0"
 # Libs
 classgraph = "4.8.184"
 hoplite = "2.9.0"
-jackson = "3.1.1"
+jackson = "3.1.2"
 koin = "4.2.1"
 kotest = "6.1.11"
 kotlin-coroutines = "1.10.2"
