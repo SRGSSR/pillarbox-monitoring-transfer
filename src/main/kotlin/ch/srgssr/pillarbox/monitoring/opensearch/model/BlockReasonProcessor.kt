@@ -86,6 +86,7 @@ internal enum class ContentRestriction(
       "This content is not available outside Switzerland",
       "Dieser Inhalt ist ausserhalb der Schweiz nicht verfügbar",
       "La RTS ne dispose pas des droits de diffusion en dehors de la Suisse",
+      "Ce contenu n'est pas disponible hors de Suisse",
       "Questo media non è disponibile fuori dalla Svizzera",
       "Questo contenuto non è disponibile fuori dalla Svizzera",
       "Quest cuntegn n'è betg disponibel ordaifer la Svizra",
