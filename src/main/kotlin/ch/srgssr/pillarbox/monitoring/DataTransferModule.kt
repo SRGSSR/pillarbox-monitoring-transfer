@@ -2,6 +2,7 @@ package ch.srgssr.pillarbox.monitoring
 
 import ch.srgssr.pillarbox.monitoring.config.configModule
 import ch.srgssr.pillarbox.monitoring.dispatcher.eventDispatcherModule
+import ch.srgssr.pillarbox.monitoring.health.healthCheckModule
 import ch.srgssr.pillarbox.monitoring.io.jsonModule
 import ch.srgssr.pillarbox.monitoring.opensearch.openSearchModule
 import org.koin.dsl.module
@@ -26,7 +27,8 @@ fun dataTransferModule(vararg profiles: String) =
       jsonModule(),
       openSearchModule(),
       eventDispatcherModule(),
+      healthCheckModule(),
     )
 
-    single { DataTransferApplicationRunner(get(), get()) }
+    single { DataTransferApplicationRunner(get(), get(), get()) }
   }

@@ -18,4 +18,5 @@ fun configModule(vararg profiles: String) =
 
     single { appConfig.openSearch }
     single { appConfig.dispatcherClient }
+    single { appConfig.healthCheck }
   }

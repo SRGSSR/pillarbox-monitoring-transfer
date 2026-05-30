@@ -2,3 +2,6 @@ dispatcher-client:
   buffer-capacity: 1000
   cache-size: 5000
   save-chunk-size: 1
+
+health-check:
+  port: 8081

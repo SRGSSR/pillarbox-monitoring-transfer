@@ -1,6 +1,7 @@
 package ch.srgssr.pillarbox.monitoring.config
 
 import ch.srgssr.pillarbox.monitoring.dispatcher.EventDispatcherClientConfig
+import ch.srgssr.pillarbox.monitoring.health.HealthCheckConfig
 import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
 import ch.srgssr.pillarbox.monitoring.opensearch.OpenSearchConfig
@@ -58,4 +59,5 @@ object ConfigLoader {
 data class AppConfig(
   val openSearch: OpenSearchConfig = OpenSearchConfig(),
   val dispatcherClient: EventDispatcherClientConfig = EventDispatcherClientConfig(),
+  val healthCheck: HealthCheckConfig = HealthCheckConfig(),
 )

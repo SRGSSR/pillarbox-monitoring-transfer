@@ -34,6 +34,8 @@ dependencies {
   implementation(libs.kotlin.coroutines.core.jvm)
   implementation(libs.ktor.client.cio)
   implementation(libs.ktor.client.core)
+  implementation(libs.ktor.server.cio)
+  implementation(libs.ktor.server.core)
   implementation(libs.logback.classic)
   implementation(libs.yauaa)
   runtimeOnly(libs.hoplite.yaml)

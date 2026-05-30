@@ -2,6 +2,7 @@ package ch.srgssr.pillarbox.monitoring
 
 import ch.srgssr.pillarbox.monitoring.benchmark.BenchmarkScheduledLogger
 import ch.srgssr.pillarbox.monitoring.dispatcher.EventDispatcherClient
+import ch.srgssr.pillarbox.monitoring.health.HealthCheckServer
 import ch.srgssr.pillarbox.monitoring.log.error
 import ch.srgssr.pillarbox.monitoring.log.logger
 import ch.srgssr.pillarbox.monitoring.opensearch.setup.OpenSearchSetupService
@@ -14,24 +15,26 @@ import ch.srgssr.pillarbox.monitoring.opensearch.setup.OpenSearchSetupService
  *
  * @property openSearchSetupService Service responsible for initializing and validating the OpenSearch setup.
  * @property eventDispatcherClient The client responsible for establishing a connection to the event dispatcher.
- * during either OpenSearch setup or SSE connection.
+ * @property healthCheckServer The HTTP server exposing the `/health` endpoint for ALB health checks.
  */
 class DataTransferApplicationRunner(
   private val openSearchSetupService: OpenSearchSetupService,
   private val eventDispatcherClient: EventDispatcherClient,
+  private val healthCheckServer: HealthCheckServer,
 ) {
   private companion object {
     val logger = logger()
   }
 
   /**
-   * Executes the OpenSearch setup task when the application starts.
+   * Starts the health check server, runs the OpenSearch setup, then starts the SSE client.
    *
-   * Upon successful setup, it initiates the [EventDispatcherClient]. If the setup fails,
-   * an error is logged and the application is terminated.
+   * The health check server starts first so the ALB can begin probing immediately during startup.
    */
   @Suppress("TooGenericExceptionCaught")
   suspend fun run() {
+    healthCheckServer.start()
+
     openSearchSetupService.start()
 
     val benchmarkJob = BenchmarkScheduledLogger.start()

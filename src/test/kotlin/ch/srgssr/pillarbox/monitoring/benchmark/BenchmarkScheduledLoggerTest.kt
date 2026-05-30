@@ -13,7 +13,7 @@ class BenchmarkScheduledLoggerTest :
     should("run one scheduled iteration without throwing") {
       runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
-        val job = BenchmarkScheduledLogger.start(dispatcher)
+        val job = BenchmarkScheduledLogger.start(context = dispatcher)
         advanceTimeBy(1_000)
         job.cancel()
       }
