@@ -2,3 +2,7 @@ dispatcher-client:
   buffer-capacity: 30000
   cache-size: 200000
   save-chunk-size: 6000
+
+health-check:
+  port: 8081
+  inactivity-threshold: 1m

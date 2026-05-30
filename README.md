@@ -56,6 +56,10 @@ Alternatively, you can build and run the application using Docker:
               pillarbox-monitoring-transfer
    ```
 
+   Port `8081` exposes the health check endpoint at `/health`. It returns `200 OK` while events
+   are flowing and `503 Service Unavailable` after a period of inactivity, making it suitable for
+   use as an ALB health check target.
+
 ## Documentation
 
 This project is a Kotlin-based application designed to connect to a Server-Sent Events (SSE)

@@ -2,12 +2,17 @@ package ch.srgssr.pillarbox.monitoring.benchmark
 
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.longs.shouldBeExactly
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class StatsTrackerTest :
   ShouldSpec({
 
     beforeTest {
-      // Reset state before each test
       StatsTracker.getAndResetAll()
     }
 
@@ -37,8 +42,26 @@ class StatsTrackerTest :
       snapshot["one"]!! shouldBeExactly 1L
       snapshot["two"]!! shouldBeExactly 2L
 
-      // After reset, all keys should return 0
       StatsTracker["one"] shouldBeExactly 0L
       StatsTracker["two"] shouldBeExactly 0L
+    }
+
+    should("update lastSeenAt on increment") {
+      val before = Clock.System.now()
+      StatsTracker.increment("key", 1L)
+
+      StatsTracker.lastSeenAt.shouldNotBeNull() shouldNotBe before
+    }
+
+    should("report active immediately after increment") {
+      StatsTracker.increment("key", 1L)
+
+      StatsTracker.isActive(1.minutes) shouldBe true
+    }
+
+    should("report inactive when threshold is already exceeded") {
+      StatsTracker.increment("key", 1L)
+
+      StatsTracker.isActive(0.seconds) shouldBe false
     }
   })

@@ -2,6 +2,8 @@ package ch.srgssr.pillarbox.monitoring
 
 import ch.srgssr.pillarbox.monitoring.benchmark.BenchmarkScheduledLogger
 import ch.srgssr.pillarbox.monitoring.dispatcher.EventDispatcherClient
+import ch.srgssr.pillarbox.monitoring.health.HealthCheckConfig
+import ch.srgssr.pillarbox.monitoring.health.HealthCheckServer
 import ch.srgssr.pillarbox.monitoring.opensearch.setup.OpenSearchSetupService
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.ShouldSpec
@@ -22,18 +24,18 @@ class DataTransferApplicationRunnerTest :
 
     val mockOpenSearchSetup = mockk<OpenSearchSetupService>()
     val mockDispatcherClient = mockk<EventDispatcherClient>()
+    val mockHealthCheckServer = mockk<HealthCheckServer>()
 
-    val runner = DataTransferApplicationRunner(mockOpenSearchSetup, mockDispatcherClient)
+    val runner = DataTransferApplicationRunner(mockOpenSearchSetup, mockDispatcherClient, mockHealthCheckServer)
 
     beforeTest {
       clearAllMocks()
+      every { mockHealthCheckServer.start() } just Runs
     }
 
-    should("run OpenSearch setup and start the event dispatcher client") {
-      val mockDispatcherJob = mockk<Job>()
+    should("start the health check server, run OpenSearch setup, then start the event dispatcher client") {
       coEvery { mockOpenSearchSetup.start() } just Runs
       coEvery { mockDispatcherClient.start() } just Runs
-      coEvery { mockDispatcherJob.join() } just Runs
       mockkObject(BenchmarkScheduledLogger)
 
       val benchmarkJob = mockk<Job>()
@@ -45,6 +47,7 @@ class DataTransferApplicationRunnerTest :
       }
 
       coVerifyOrder {
+        mockHealthCheckServer.start()
         mockOpenSearchSetup.start()
         mockDispatcherClient.start()
         benchmarkJob.cancel()

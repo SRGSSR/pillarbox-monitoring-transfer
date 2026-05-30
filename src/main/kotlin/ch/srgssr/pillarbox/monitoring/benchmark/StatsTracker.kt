@@ -2,15 +2,23 @@ package ch.srgssr.pillarbox.monitoring.benchmark
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Instant
 
 /**
  * Utility object for tracking and aggregating statistics.
  *
  * This class uses a [ConcurrentHashMap] to store statistics counters identified by unique keys.
  * It provides methods to increment, retrieve, and reset these counters.
+ *
+ * Additionally, it tracks the last time any counter was incremented, which can be used
+ * to determine whether the application is actively processing events.
  */
 object StatsTracker {
   private val stats = ConcurrentHashMap<String, AtomicLong>()
+  private val lastActivityAt = AtomicReference(Clock.System.now())
 
   /**
    * Increments the count for a specific key by the specified delta.
@@ -24,6 +32,7 @@ object StatsTracker {
     delta: Long = 1,
   ) {
     stats.computeIfAbsent(key) { AtomicLong(0) }.addAndGet(delta)
+    lastActivityAt.set(Clock.System.now())
   }
 
   /**
@@ -53,4 +62,18 @@ object StatsTracker {
    * @return A map containing the keys and their corresponding counts before reset.
    */
   fun getAndResetAll(): Map<String, Long> = stats.mapValues { it.value.getAndSet(0) }
+
+  /**
+   * The timestamp of the last recorded activity, or `null` if no activity has been recorded yet.
+   */
+  val lastSeenAt: Instant?
+    get() = lastActivityAt.get()
+
+  /**
+   * Returns `true` if activity was recorded within the given [threshold].
+   *
+   * @param threshold The maximum duration of silence before the application is considered inactive.
+   */
+  fun isActive(threshold: Duration): Boolean =
+    lastActivityAt.get()?.let { Clock.System.now() - it < threshold } ?: false
 }
