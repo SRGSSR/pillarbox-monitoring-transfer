@@ -5,8 +5,8 @@ import ch.srgssr.pillarbox.monitoring.benchmark.timed
 import ch.srgssr.pillarbox.monitoring.cache.LRUCache
 import ch.srgssr.pillarbox.monitoring.exception.HttpClientException
 import ch.srgssr.pillarbox.monitoring.flow.chunked
+import ch.srgssr.pillarbox.monitoring.log.debug
 import ch.srgssr.pillarbox.monitoring.log.error
-import ch.srgssr.pillarbox.monitoring.log.info
 import ch.srgssr.pillarbox.monitoring.log.logger
 import ch.srgssr.pillarbox.monitoring.log.trace
 import ch.srgssr.pillarbox.monitoring.opensearch.model.EventRequest
@@ -63,7 +63,7 @@ class EventDispatcherClient(
         capacity = config.bufferCapacity,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
       ).chunked(config.saveChunkSize)
-      .onEach { logger.info { "Start processing next ${it.size} events" } }
+      .onEach { logger.debug { "Start processing next ${it.size} events" } }
       .map { events ->
         StatsTracker.increment("nonDroppedEvents", events.size)
 
@@ -77,14 +77,20 @@ class EventDispatcherClient(
             }
 
         val nonStartEvents =
-          events
-            .filter { it.eventName != "START" }
-            .onEach { it.session = sessionCache.get(it.sessionId) }
-            .filter { it.session != null }
-            .also { StatsTracker.increment("cacheHits", it.size) }
+          events.filter { it.eventName != "START" }.onEach {
+            it.session =
+              sessionCache.get(it.sessionId)
+          }
+        val cachedNonStartEvents = nonStartEvents.filter { it.session != null }
 
-        startEvents + nonStartEvents
-      }.onEach { logger.info { "Adding ${it.size} events to next save batch" } }
+        logger.debug {
+          "${nonStartEvents.size - cachedNonStartEvents.size} event(s) dropped: session not found in cache"
+        }
+
+        StatsTracker.increment("cacheHits", cachedNonStartEvents.size)
+
+        startEvents + cachedNonStartEvents
+      }.onEach { logger.debug { "Adding ${it.size} events to next save batch" } }
       .onEach { this.saveEvents(it) }
       .catch { e ->
         logger.error(e) { "Terminal failure in event pipeline: ${e.message}" }
@@ -100,9 +106,9 @@ class EventDispatcherClient(
         eventRepository.saveAll(events)
       }
     } catch (e: HttpClientException) {
-      logger.error("An connection error occurred while saving the current batch", e)
+      logger.error("Failed to save batch of ${events.size} event(s): HTTP error", e)
     } catch (e: Exception) {
-      logger.error("An unexpected error occurred while saving the current batch", e)
+      logger.error("Failed to save batch of ${events.size} event(s): unexpected error", e)
     }
   }
 }

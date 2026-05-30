@@ -1,3 +1,13 @@
-<configuration>
+<included>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
   <logger name="ch.srgssr.pillarbox.monitoring.opensearch.model" level="ERROR"/>
-</configuration>
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </root>
+</included>
