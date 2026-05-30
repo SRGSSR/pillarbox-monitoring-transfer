@@ -1,5 +1,7 @@
 package ch.srgssr.pillarbox.monitoring.opensearch.model
 
+import ch.srgssr.pillarbox.monitoring.log.logger
+import ch.srgssr.pillarbox.monitoring.log.warn
 import tools.jackson.databind.util.StdConverter
 
 /**
@@ -13,6 +15,10 @@ import tools.jackson.databind.util.StdConverter
  * @see [DataProcessor]
  */
 internal class EventRequestDataConverter : StdConverter<EventRequest, EventRequest>() {
+  private companion object {
+    val logger = logger()
+  }
+
   private val processors =
     listOf(
       DeviceNameProcessor(),
@@ -24,15 +30,26 @@ internal class EventRequestDataConverter : StdConverter<EventRequest, EventReque
       ClampingNumberDataProcessor(),
     )
 
-  @Suppress("UNCHECKED_CAST")
+  @Suppress("UNCHECKED_CAST", "TooGenericExceptionCaught")
   override fun convert(value: EventRequest): EventRequest {
-    (value.data as? MutableMap<String, Any?>)?.let { data ->
-      processors
-        .forEach { processor ->
-          if (processor.shouldProcess(value.eventName, data)) {
-            value.data = processor.process(data)
+    val data =
+      (value.data as? MutableMap<String, Any?>) ?: run {
+        logger.warn {
+          "Event '${value.eventName}' (session=${value.sessionId}) has unexpected data type — skipping processors"
+        }
+        return value
+      }
+
+    processors.forEach { processor ->
+      if (processor.shouldProcess(value.eventName, data)) {
+        try {
+          value.data = processor.process(data)
+        } catch (e: Exception) {
+          logger.warn(e) {
+            "Processor ${processor::class.simpleName} failed on event '${value.eventName}' (session=${value.sessionId})"
           }
         }
+      }
     }
 
     return value

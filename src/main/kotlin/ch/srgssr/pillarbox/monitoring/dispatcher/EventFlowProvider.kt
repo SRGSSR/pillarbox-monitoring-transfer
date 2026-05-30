@@ -74,7 +74,7 @@ class EventFlowProvider(
         close(e)
       }
 
-      awaitClose { logger.info("SSE flow closed") }
+      awaitClose { logger.warn("SSE flow closed") }
     }.retryWhen(
       config.sseRetry.toRetryWhen(
         onRetry = { cause, attempt, delayMillis ->

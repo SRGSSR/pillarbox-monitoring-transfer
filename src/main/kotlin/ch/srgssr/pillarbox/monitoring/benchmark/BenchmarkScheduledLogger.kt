@@ -1,6 +1,6 @@
 package ch.srgssr.pillarbox.monitoring.benchmark
 
-import ch.srgssr.pillarbox.monitoring.log.info
+import ch.srgssr.pillarbox.monitoring.log.debug
 import ch.srgssr.pillarbox.monitoring.log.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,8 +22,8 @@ object BenchmarkScheduledLogger {
   fun start(context: CoroutineContext = Dispatchers.Default) =
     CoroutineScope(context).launch {
       while (isActive) {
-        logger.info { "Benchmark averages: ${TimeTracker.averages}" }
-        logger.info { "Latest stats per minute: ${StatsTracker.getAndResetAll()}" }
+        logger.debug { "Benchmark averages: ${TimeTracker.averages}" }
+        logger.debug { "Latest stats per minute: ${StatsTracker.getAndResetAll()}" }
         delay(60_000L)
       }
     }
