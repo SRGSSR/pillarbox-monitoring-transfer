@@ -26,22 +26,18 @@ repositories {
 
 dependencies {
   // Dependencies
+  implementation(libs.bundles.hoplite)
+  implementation(libs.bundles.koin)
+  implementation(libs.bundles.ktor.client)
+  implementation(libs.bundles.ktor.server)
+  implementation(libs.bundles.logging)
   implementation(libs.classgraph)
-  implementation(libs.hoplite.core)
   implementation(libs.jackson.module.kotlin)
-  implementation(libs.koin.core)
-  implementation(libs.koin.logger)
   implementation(libs.kotlin.coroutines.core.jvm)
-  implementation(libs.ktor.client.cio)
-  implementation(libs.ktor.client.core)
-  implementation(libs.ktor.server.cio)
-  implementation(libs.ktor.server.core)
-  implementation(libs.logback.classic)
   implementation(libs.yauaa)
-  runtimeOnly(libs.hoplite.yaml)
-  runtimeOnly(libs.log4j.to.slf4j)
 
   // Test Dependencies
+  testImplementation(libs.bundles.okhttp)
   testImplementation(libs.koin.test)
   testImplementation(libs.kotest.extensions.koin) {
     exclude(group = "io.insert-koin", module = "koin-core")
@@ -50,8 +46,6 @@ dependencies {
   testImplementation(libs.kotest.runner.junit5)
   testImplementation(libs.kotlin.coroutines.test)
   testImplementation(libs.mockk)
-  testImplementation(libs.mockwebserver)
-  testImplementation(libs.okhttp)
 }
 
 kotlin {
