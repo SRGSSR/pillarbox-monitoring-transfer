@@ -354,5 +354,120 @@ class ErrorProcessorTest :
       val dataNode = eventRequest.data as Map<*, *>
       dataNode["error_type"] shouldBe "IL_ERROR"
     }
+
+    should("classify a web 404 on the Integration Layer as IL_NOT_FOUND_ERROR instead of IL_ERROR") {
+      // Given: a real videojs error log with an httpStatusCode of 404 against il.srgssr.ch
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "ERROR",
+          "timestamp": 1630000000000,
+          "user_ip": "127.0.0.1",
+          "version": 1,
+          "data": {
+            "log": "[[\"VIDEOJS:\",\"WARN:\",\"videojs.plugin() is deprecated; use videojs.registerPlugin() instead\"],[\"VIDEOJS:\",\"ERROR:\",\"(CODE:17 undefined)\",\"The content cannot be played.\",{\"code\":17,\"httpStatusCode\":404,\"url\":\"https://il.srgssr.ch/integrationlayer/2.0/mediaComposition/byUrn/urn:swisstxt:video:srf:1838135.json?onlyChapters=false&vector=portalplay\",\"type\":\"IL_ERROR\",\"message\":\"The content cannot be played.\",\"iconClass\":\"vjs-icon-network\"}]]"
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest =
+        jsonMapper.readValue(
+          jsonInput,
+          EventRequest::class.java,
+        )
+
+      // Then: The error should be classified as a not found error, not a generic IL error
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["error_type"] shouldBe "IL_NOT_FOUND_ERROR"
+    }
+
+    should("classify an iOS 404 on the Integration Layer as IL_NOT_FOUND_ERROR instead of IL_ERROR") {
+      // Given: a real Apple error with a localized "Introuvable" (not found) message
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "ERROR",
+          "timestamp": 1630000000000,
+          "user_ip": "127.0.0.1",
+          "version": 1,
+          "data": {
+            "name": "PillarboxStandardConnector.HttpError(1)",
+            "message": "L'opération n'a pas pu s'achever. (PillarboxStandardConnector.HttpError erreur 1 - Introuvable)"
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest =
+        jsonMapper.readValue(
+          jsonInput,
+          EventRequest::class.java,
+        )
+
+      // Then: The error should be classified as a not found error, not a generic IL error
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["error_type"] shouldBe "IL_NOT_FOUND_ERROR"
+    }
+
+    should("classify an iOS Integration Layer error without a not-found message as IL_ERROR") {
+      // Given: a matching iOS error name but a message that is not a localized "not found"
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "ERROR",
+          "timestamp": 1630000000000,
+          "user_ip": "127.0.0.1",
+          "version": 1,
+          "data": {
+            "name": "PillarboxStandardConnector.HttpError(5)",
+            "message": "L'opération n'a pas pu s'achever. (PillarboxStandardConnector.HttpError erreur 5)"
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest =
+        jsonMapper.readValue(
+          jsonInput,
+          EventRequest::class.java,
+        )
+
+      // Then: The error should fall back to the generic IL error
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["error_type"] shouldBe "IL_ERROR"
+    }
+
+    should("classify an Android 404 on the Integration Layer as IL_NOT_FOUND_ERROR instead of IL_ERROR") {
+      // Given: a real Android HttpResultException stack trace with a 404 from SRGAssetLoader
+      val jsonInput =
+        """
+        {
+          "session_id": "12345",
+          "event_name": "ERROR",
+          "timestamp": 1630000000000,
+          "user_ip": "127.0.0.1",
+          "version": 1,
+          "data": {
+            "name": "HttpResultException",
+            "log": "ch.srgssr.pillarbox.player.network.HttpResultException: Not Found (404)\n    at ch.srgssr.pillarbox.core.business.integrationlayer.service.HttpMediaCompositionService.fetchMediaComposition-gIAlu-s(HttpMediaCompositionService.kt:40)\n    at ch.srgssr.pillarbox.core.business.source.SRGAssetLoader.loadAsset(SRGAssetLoader.kt:125)\n    at ch.srgssr.pillarbox.player.source.PillarboxMediaSource${'$'}prepareSourceInternal${'$'}1.invokeSuspend(PillarboxMediaSource.kt:67)"
+          }
+        }
+        """.trimIndent()
+
+      // When: the event is deserialized
+      val eventRequest =
+        jsonMapper.readValue(
+          jsonInput,
+          EventRequest::class.java,
+        )
+
+      // Then: The error should be classified as a not found error, not a generic IL error
+      val dataNode = eventRequest.data as Map<*, *>
+      dataNode["error_type"] shouldBe "IL_NOT_FOUND_ERROR"
+    }
   }
 }
