@@ -45,6 +45,11 @@ internal enum class WebPlayerErrorType(
   CONNECTION_ERROR("\"httpStatusCode\"\\s*:\\s*418", 10),
 
   /**
+   * The requested resource was not found on the Integration Layer (HTTP 404).
+   */
+  IL_NOT_FOUND_ERROR("\"httpStatusCode\"\\s*:\\s*404[^}]*?il\\.srgssr\\.ch", 5),
+
+  /**
    * Failure when calling the Integration Layer API.
    */
   IL_ERROR("il\\.srgssr\\.ch"),
@@ -117,66 +122,86 @@ internal enum class WebPlayerErrorType(
  * Enum representing various error categories for the iOS player.
  */
 internal enum class IOSPlayerErrorType(
-  vararg matches: String,
+  val namePatterns: List<String>,
+  val messagePatterns: List<String> = emptyList(),
   private val priority: Int = 0,
 ) {
   /**
-   * Failure when calling the Integration Layer API.
+   * The requested resource was not found on the Integration Layer (HTTP 404).
+   * The status code is only available as a localized string in the message.
    */
-  IL_ERROR("PillarboxCoreBusiness\\.DataError\\(1\\)", priority = 10),
-
-  /**
-   * Failure to decrypt or decode DRM-protected content.
-   */
-  DRM_ERROR("AVFoundationErrorDomain\\(-11870\\)", priority = 10),
-
-  /**
-   * Error loading or decoding the media resource.
-   */
-  PLAYBACK_MEDIA_SOURCE_ERROR(
-    "AVFoundationErrorDomain\\(.*?\\)",
-    "CoreMediaErrorDomain\\(.*?\\)",
-    "NSCocoaErrorDomain\\(.*?\\)",
+  IL_NOT_FOUND_ERROR(
+    namePatterns =
+      listOf(
+        "PillarboxCoreBusiness\\.DataError\\(1\\)",
+        "PillarboxStandardConnector\\.HttpError\\(\\d+\\)",
+      ),
+    messagePatterns = listOf("Introuvable", "Nicht gefunden", "Non trovato", "Not found"),
+    priority = 20,
   ),
 
   /**
-   * A network error occurred during playback.
+   * Failure when calling the Integration Layer API.
    */
-  PLAYBACK_NETWORK_ERROR("NSURLErrorDomain\\(.*?\\)", "kCFErrorDomainCFNetwork\\(.*?\\)"),
+  IL_ERROR(
+    namePatterns =
+      listOf(
+        "PillarboxCoreBusiness\\.DataError\\(1\\)",
+        "PillarboxStandardConnector\\.HttpError\\(\\d+\\)",
+      ),
+    priority = 10,
+  ),
 
-  /**
-   * The user experienced a connection problem to the remote API or the media resource.
-   */
-  CONNECTION_ERROR("NSURLErrorDomain\\(-100(5|9)\\)", "kCFErrorDomainCFNetwork\\(-100(5|9)\\)", priority = 10),
+  DRM_ERROR(listOf("AVFoundationErrorDomain\\(-11870\\)"), priority = 10),
+
+  PLAYBACK_MEDIA_SOURCE_ERROR(
+    listOf("AVFoundationErrorDomain\\(.*?\\)", "CoreMediaErrorDomain\\(.*?\\)", "NSCocoaErrorDomain\\(.*?\\)"),
+  ),
+
+  PLAYBACK_NETWORK_ERROR(listOf("NSURLErrorDomain\\(.*?\\)", "kCFErrorDomainCFNetwork\\(.*?\\)")),
+
+  CONNECTION_ERROR(
+    listOf("NSURLErrorDomain\\(-100(5|9)\\)", "kCFErrorDomainCFNetwork\\(-100(5|9)\\)"),
+    priority = 10,
+  ),
   ;
 
-  private val matches = matches.map { Regex(it, RegexOption.IGNORE_CASE) }
+  val namePatternsRegex = namePatterns.map { Regex(it, RegexOption.IGNORE_CASE) }
+  val messagePatternsRegex = messagePatterns.map { Regex(it, RegexOption.IGNORE_CASE) }
 
   companion object {
     /**
-     * Apple player errors are categorized directly by their `name` field, which indicates the type of failure.
+     * Apple player errors are categorized by their `name` field and, when patterns are
+     * defined, their `message` field.
      *
-     * This function trims and compares the provided `name` against a list of known error type patterns.
-     * The first matching type (case-insensitive) is returned.
+     * This function trims the provided `name` and matches it against each error type's
+     * name patterns (full match). If an error type also defines message patterns, the
+     * trimmed `message` must additionally contain a match for at least one of them;
+     * types without message patterns match on `name` alone.
      *
-     * In addition, each error type has an assigned priority weight. When multiple error
-     * patterns match, the function first compares their priorities: higher priority errors
-     * always take precedence over lower priority ones. If two errors share the same priority,
-     * the one that occurs furthest down the log is chosen.
+     * Each error type has an assigned priority weight. When multiple error types match,
+     * the one with the highest priority is returned. If several matching types share the
+     * highest priority, the first one in declaration order is chosen.
      *
-     * @param data A map expected to contain a "name" key corresponding to the iOS error identifier.
+     * @param data A map expected to contain a "name" key (required) and optionally a
+     * "message" key, corresponding to the iOS error identifier and description.
      *
-     * @return The name of the matched error type, or null if no match is found.
+     * @return The name of the matched error type, or null if `name` is absent or no
+     * error type matches.
      */
-    fun find(data: MutableMap<String, Any?>): String? =
-      (data["name"] as? String)?.let { rawName ->
-        val name = rawName.trim()
-        entries
-          .filter { type ->
-            type.matches.any { it.matches(name) }
-          }.maxByOrNull { it.priority }
-          ?.name
-      }
+    fun find(data: MutableMap<String, Any?>): String? {
+      val name = (data["name"] as? String)?.trim() ?: return null
+      val message = (data["message"] as? String)?.trim() ?: ""
+      return entries
+        .filter { type ->
+          type.namePatternsRegex.any { it.matches(name) } &&
+            (
+              type.messagePatternsRegex.isEmpty() ||
+                type.messagePatternsRegex.any { it.containsMatchIn(message) }
+            )
+        }.maxByOrNull { it.priority }
+        ?.name
+    }
   }
 }
 
@@ -191,6 +216,14 @@ internal enum class AndroidPlayerErrorType(
    * Failure to decrypt or decode DRM-protected content.
    */
   DRM_ERROR(listOf("drm")),
+
+  /**
+   * The requested resource was not found on the Integration Layer (HTTP 404).
+   */
+  IL_NOT_FOUND_ERROR(
+    listOf("(?s)\\(404\\).*SRGAssetLoader\\.loadAsset"),
+    listOf("HttpResultException"),
+  ),
 
   /**
    * Failure when calling the Integration Layer API.
