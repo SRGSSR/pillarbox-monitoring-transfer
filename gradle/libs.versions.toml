@@ -11,7 +11,7 @@ versions-plugin = "0.54.0"
 # Libs
 classgraph = "4.8.184"
 hoplite = "2.9.0"
-jackson = "3.1.4"
+jackson = "3.2.0"
 koin = "4.2.1"
 kotest = "6.1.11"
 kotlin-coroutines = "1.11.0"
@@ -19,7 +19,7 @@ ktor = "3.5.0"
 log4j = "2.26.0"
 logback = "1.5.34"
 mockk = "1.14.11"
-okhttp = "5.3.2"
+okhttp = "5.4.0"
 yauaa = "8.1.1"
 
 [libraries]
