@@ -16,6 +16,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.retryWhen
+import tools.jackson.core.JacksonException
 import tools.jackson.databind.json.JsonMapper
 
 /**
@@ -64,9 +65,16 @@ class EventFlowProvider(
     callbackFlow {
       try {
         httpClient.sse("") {
-          incoming.collect {
-            val event = jsonMapper.readValue(it.data, EventRequest::class.java)
-            trySend(event).isSuccess
+          incoming.collect { event ->
+            val parsed =
+              try {
+                jsonMapper.readValue(event.data, EventRequest::class.java)
+              } catch (e: JacksonException) {
+                logger.warn(e) { "Dropping malformed event: ${e.message}" }
+                null
+              }
+
+            parsed?.let { trySend(it).isSuccess }
           }
         }
       } catch (e: Exception) {
