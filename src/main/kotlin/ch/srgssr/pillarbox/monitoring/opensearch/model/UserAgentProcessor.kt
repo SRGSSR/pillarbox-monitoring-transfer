@@ -11,13 +11,39 @@ import nl.basjes.parse.useragent.UserAgentAnalyzer
  * It also determines whether the user agent belongs to a robot.
  */
 internal class UserAgentProcessor : DataProcessor {
-  private companion object {
-    val userAgentAnalyzer: UserAgentAnalyzer =
+  companion object {
+    /**
+     * Number of sample user agents to run through the analyzer during [warmUp].
+     */
+    private const val PREHEAT_ITERATIONS = 1_000L
+
+    /**
+     * Analyzer restricted to the fields used by this processor, initialized eagerly at build time.
+     */
+    private val userAgentAnalyzer: UserAgentAnalyzer =
       UserAgentAnalyzer
         .newBuilder()
         .hideMatcherLoadStats()
         .withCache(10000)
+        .withField(UserAgent.AGENT_NAME)
+        .withField(UserAgent.AGENT_VERSION)
+        .withField(UserAgent.AGENT_CLASS)
+        .withField(UserAgent.AGENT_SECURITY)
+        .withField(UserAgent.DEVICE_NAME)
+        .withField(UserAgent.DEVICE_CLASS)
+        .withField(UserAgent.LAYOUT_ENGINE_CLASS)
+        .withField(UserAgent.OPERATING_SYSTEM_NAME)
+        .withField(UserAgent.OPERATING_SYSTEM_VERSION)
+        .immediateInitialization()
         .build()
+
+    /**
+     * Warms up the analyzer by running sample user agents through it.
+     * Call once at application start-up, before event consumption begins.
+     */
+    fun warmUp() {
+      userAgentAnalyzer.preHeat(PREHEAT_ITERATIONS)
+    }
   }
 
   private fun isHackerOrRobot(userAgent: UserAgent): Boolean =

@@ -1,10 +1,12 @@
 package ch.srgssr.pillarbox.monitoring
 
 import ch.srgssr.pillarbox.monitoring.benchmark.BenchmarkScheduledLogger
+import ch.srgssr.pillarbox.monitoring.benchmark.timed
 import ch.srgssr.pillarbox.monitoring.dispatcher.EventDispatcherClient
 import ch.srgssr.pillarbox.monitoring.health.HealthCheckServer
 import ch.srgssr.pillarbox.monitoring.log.error
 import ch.srgssr.pillarbox.monitoring.log.logger
+import ch.srgssr.pillarbox.monitoring.opensearch.model.UserAgentProcessor
 import ch.srgssr.pillarbox.monitoring.opensearch.setup.OpenSearchSetupService
 
 /**
@@ -36,6 +38,9 @@ class DataTransferApplicationRunner(
     healthCheckServer.start()
 
     openSearchSetupService.start()
+
+    logger.info("Warming up the user agent analyzer...")
+    timed("UserAgentProcessor.warmUp") { UserAgentProcessor.warmUp() }
 
     val benchmarkJob = BenchmarkScheduledLogger.start()
     try {
