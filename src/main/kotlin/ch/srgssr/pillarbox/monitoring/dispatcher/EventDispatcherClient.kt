@@ -9,28 +9,33 @@ import ch.srgssr.pillarbox.monitoring.log.debug
 import ch.srgssr.pillarbox.monitoring.log.error
 import ch.srgssr.pillarbox.monitoring.log.logger
 import ch.srgssr.pillarbox.monitoring.log.trace
+import ch.srgssr.pillarbox.monitoring.log.warn
 import ch.srgssr.pillarbox.monitoring.opensearch.model.EventRequest
 import ch.srgssr.pillarbox.monitoring.opensearch.repository.EventRepository
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.json.JsonMapper
 
 /**
  * Service responsible for consuming events from a remote event dispatcher service via Server-Sent Events (SSE),
  * enriching them with session metadata, and persisting them in bulk.
  *
- * @property eventFlowProvider Provides a reactive flow of incoming [EventRequest]s.
+ * @property eventFlowProvider Provides a reactive flow of raw event payloads.
  * @property eventRepository The persistence layer for storing enriched events.
  * @property config Configuration for the buffer size, cache and batching.
+ * @property jsonMapper Jackson's [JsonMapper] used to deserialize incoming event payloads.
  */
 class EventDispatcherClient(
   private val eventFlowProvider: EventFlowProvider,
   private val eventRepository: EventRepository,
   private val config: EventDispatcherClientConfig,
+  private val jsonMapper: JsonMapper,
 ) {
   private companion object {
     /**
@@ -45,15 +50,16 @@ class EventDispatcherClient(
    * Starts the reactive event processing pipeline.
    *
    * The pipeline:
-   * - Subscribes to the event stream.
+   * - Subscribes to the raw event stream.
    * - Tracks basic metrics for incoming and processed events.
    * - Buffers events with overflow policy (dropping oldest).
    * - Batches events for efficient saving.
+   * - Deserializes and enriches each batch of raw payloads.
    * - Separates "START" events to extract session data and populate the cache.
    * - Enriches follow-up events with cached session info.
    * - Persists all valid events using the repository.
    *
-   * This method launches the flow in a background coroutine and returns the running [Job].
+   * This method suspends until the flow completes or the calling coroutine is cancelled.
    */
   suspend fun start() =
     eventFlowProvider
@@ -64,6 +70,11 @@ class EventDispatcherClient(
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
       ).chunked(config.saveChunkSize)
       .onEach { logger.debug { "Start processing next ${it.size} events" } }
+      .map { rawEvents ->
+        timed("EventDispatcherClient.parseEvents") {
+          rawEvents.mapNotNull(::parseEvent)
+        }
+      }.filter { it.isNotEmpty() }
       .map { events ->
         StatsTracker.increment("nonDroppedEvents", events.size)
 
@@ -96,6 +107,20 @@ class EventDispatcherClient(
         logger.error(e) { "Terminal failure in event pipeline: ${e.message}" }
         throw e
       }.collect()
+
+  /**
+   * Deserializes a raw event payload into an [EventRequest].
+   *
+   * Malformed payloads are dropped, logged and counted under the `malformedEvents` statistic.
+   */
+  private fun parseEvent(data: String): EventRequest? =
+    try {
+      jsonMapper.readValue(data, EventRequest::class.java)
+    } catch (e: JacksonException) {
+      StatsTracker.increment("malformedEvents")
+      logger.warn(e) { "Dropping malformed event: ${e.message}" }
+      null
+    }
 
   @Suppress("TooGenericExceptionCaught")
   private suspend fun saveEvents(events: List<EventRequest>) {

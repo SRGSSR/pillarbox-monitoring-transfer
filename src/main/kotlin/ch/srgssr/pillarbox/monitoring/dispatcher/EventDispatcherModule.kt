@@ -10,6 +10,6 @@ import org.koin.dsl.module
  */
 fun eventDispatcherModule() =
   module {
-    single { EventFlowProvider(get(), get()) }
-    single { EventDispatcherClient(get(), get(), get()) }
+    single { EventFlowProvider(get()) }
+    single { EventDispatcherClient(get(), get(), get(), get()) }
   }

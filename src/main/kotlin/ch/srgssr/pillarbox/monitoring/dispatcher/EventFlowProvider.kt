@@ -1,9 +1,10 @@
 package ch.srgssr.pillarbox.monitoring.dispatcher
 
+import ch.srgssr.pillarbox.monitoring.benchmark.StatsTracker
+import ch.srgssr.pillarbox.monitoring.log.debug
 import ch.srgssr.pillarbox.monitoring.log.error
 import ch.srgssr.pillarbox.monitoring.log.logger
 import ch.srgssr.pillarbox.monitoring.log.warn
-import ch.srgssr.pillarbox.monitoring.opensearch.model.EventRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
@@ -16,23 +17,19 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.retryWhen
-import tools.jackson.core.JacksonException
-import tools.jackson.databind.json.JsonMapper
 
 /**
- * Provides a reactive [Flow] of [EventRequest]s by connecting to a remote Server-Sent Events (SSE) endpoint.
+ * Provides a reactive [Flow] of raw event payloads by connecting to a remote Server-Sent Events (SSE) endpoint.
  *
  * This component is responsible for:
  * - Establishing the connection to the SSE endpoint configured in [EventDispatcherClientConfig].
- * - Mapping the SSE stream to a stream of [EventRequest] objects.
+ * - Forwarding the raw SSE data payloads downstream, deserialization is handled by the consumer.
  * - Applying retry logic in case of transient failures, with support for logging retry attempts.
  *
  * @property config The SSE client configuration including URI and retry strategy.
- * @property jsonMapper Jackson's [JsonMapper] used to serialize event objects.
  */
 class EventFlowProvider(
   private val config: EventDispatcherClientConfig,
-  private val jsonMapper: JsonMapper,
 ) {
   private companion object {
     /**
@@ -56,25 +53,28 @@ class EventFlowProvider(
     }
 
   /**
-   * Creates and returns a [Flow] of [EventRequest]s from the SSE endpoint.
+   * Creates and returns a [Flow] of raw event payloads from the SSE endpoint.
    *
-   * @return A [Flow] that emits [EventRequest]s received from the remote SSE endpoint.
+   * Payloads that cannot be handed off because the flow buffer is full are dropped,
+   * logged and counted under the `sseDroppedEvents` statistic.
+   *
+   * @return A [Flow] that emits the raw `data` payload of each SSE event.
    */
   @Suppress("TooGenericExceptionCaught")
-  fun start(): Flow<EventRequest> =
+  fun start(): Flow<String> =
     callbackFlow {
       try {
         httpClient.sse("") {
           incoming.collect { event ->
-            val parsed =
-              try {
-                jsonMapper.readValue(event.data, EventRequest::class.java)
-              } catch (e: JacksonException) {
-                logger.warn(e) { "Dropping malformed event: ${e.message}" }
-                null
+            event.data?.let { data ->
+              val result = trySend(data)
+              if (result.isClosed) {
+                logger.debug { "Dropping event: SSE flow is closed" }
+              } else if (result.isFailure) {
+                StatsTracker.increment("sseDroppedEvents")
+                logger.warn { "Dropping event: SSE flow buffer is full" }
               }
-
-            parsed?.let { trySend(it).isSuccess }
+            }
           }
         }
       } catch (e: Exception) {

@@ -33,14 +33,12 @@ class EventFlowProviderTest :
       mockWebServer.shutdown()
     }
 
-    should("emit EventRequests from SSE stream") {
+    should("emit raw event payloads from SSE stream") {
       runTest {
-        val event1 = eventRequest { eventName = "START" }
-        val event2 = eventRequest { eventName = "HEARTBEAT" }
+        val event1 = jsonMapper.writeValueAsString(eventRequest { eventName = "START" })
+        val event2 = jsonMapper.writeValueAsString(eventRequest { eventName = "HEARTBEAT" })
 
-        val sseData =
-          "data: ${jsonMapper.writeValueAsString(event1)}\n\n" +
-            "data: ${jsonMapper.writeValueAsString(event2)}\n\n"
+        val sseData = "data: $event1\n\ndata: $event2\n\n"
 
         mockWebServer.enqueue(
           MockResponse()
@@ -52,8 +50,30 @@ class EventFlowProviderTest :
         val events = provider.start().take(2).toList()
 
         events shouldHaveSize 2
-        events[0].eventName shouldBe "START"
-        events[1].eventName shouldBe "HEARTBEAT"
+        events[0] shouldBe event1
+        events[1] shouldBe event2
+      }
+    }
+
+    should("pass payloads through without parsing or validating them") {
+      runTest {
+        val event = jsonMapper.writeValueAsString(eventRequest { eventName = "START" })
+        val malformed = """{"session_id":"abc","event_name":"ERROR","@timestamp":"123'","version":1,"data":{}"""
+
+        val sseData = "data: $event\n\ndata: $malformed\n\n"
+
+        mockWebServer.enqueue(
+          MockResponse()
+            .setResponseCode(200)
+            .setHeader("Content-Type", "text/event-stream")
+            .setBody(sseData),
+        )
+
+        val events = provider.start().take(2).toList()
+
+        events shouldHaveSize 2
+        events[0] shouldBe event
+        events[1] shouldBe malformed
       }
     }
 
@@ -61,35 +81,7 @@ class EventFlowProviderTest :
       fun noRetryProvider() =
         EventFlowProvider(
           config.copy(sseRetry = config.sseRetry.copy(maxAttempts = 0)),
-          jsonMapper,
         )
-
-      should("skip a malformed event without consuming the retry budget") {
-        runTest {
-          val event1 = eventRequest { eventName = "START" }
-          val event2 = eventRequest { eventName = "HEARTBEAT" }
-          val malformed = """{"session_id":"abc","event_name":"ERROR","@timestamp":"123'","version":1,"data":{}}"""
-
-          val sseData =
-            "data: ${jsonMapper.writeValueAsString(event1)}\n\n" +
-              "data: $malformed\n\n" +
-              "data: ${jsonMapper.writeValueAsString(event2)}\n\n"
-
-          mockWebServer.enqueue(
-            MockResponse()
-              .setResponseCode(200)
-              .setHeader("Content-Type", "text/event-stream")
-              .setBody(sseData),
-          )
-
-          val events = noRetryProvider().start().take(2).toList()
-
-          events shouldHaveSize 2
-          events[0].eventName shouldBe "START"
-          events[1].eventName shouldBe "HEARTBEAT"
-          mockWebServer.requestCount shouldBe 1
-        }
-      }
 
       should("terminate the stream when a connection failure exhausts the retry budget") {
         runTest {
@@ -103,26 +95,25 @@ class EventFlowProviderTest :
 
       should("recover from a transient connection failure while retries remain") {
         runTest {
-          val event = eventRequest { eventName = "START" }
+          val event = jsonMapper.writeValueAsString(eventRequest { eventName = "START" })
 
           mockWebServer.enqueue(MockResponse().setResponseCode(500))
           mockWebServer.enqueue(
             MockResponse()
               .setResponseCode(200)
               .setHeader("Content-Type", "text/event-stream")
-              .setBody("data: ${jsonMapper.writeValueAsString(event)}\n\n"),
+              .setBody("data: $event\n\n"),
           )
 
           val provider =
             EventFlowProvider(
               config.copy(sseRetry = config.sseRetry.copy(maxAttempts = 1)),
-              jsonMapper,
             )
 
           val events = provider.start().take(1).toList()
 
           events shouldHaveSize 1
-          events[0].eventName shouldBe "START"
+          events[0] shouldBe event
         }
       }
     }
