@@ -116,6 +116,58 @@
                 }
               }
             },
+            "capabilities": {
+              "properties": {
+                "widevine": {
+                  "properties": {
+                    "level": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    },
+                    "hdcp": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "fairPlay": {
+                  "properties": {
+                    "level": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    },
+                    "hdcp": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "playReady": {
+                  "properties": {
+                    "level": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    },
+                    "hdcp": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "clearKey": {
+                  "properties": {
+                    "level": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    },
+                    "hdcp": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            },
             "device": {
               "properties": {
                 "id": {

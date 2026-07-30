@@ -28,6 +28,7 @@ internal class EventRequestDataConverter : StdConverter<EventRequest, EventReque
       ContentRestrictionProcessor(),
       ErrorProcessor(),
       ClampingNumberDataProcessor(),
+      CapabilitiesProcessor(),
     )
 
   @Suppress("UNCHECKED_CAST", "TooGenericExceptionCaught")
