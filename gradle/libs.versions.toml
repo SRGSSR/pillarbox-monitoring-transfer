@@ -6,10 +6,10 @@ kover = "0.9.9"
 ktlint = "14.2.0"
 ktlint-cli = "1.8.0"
 shadow = "9.6.1"
-versions-plugin = "0.54.0"
+versions-plugin = "0.56.0"
 
 # Libs
-classgraph = "4.8.184"
+classgraph = "4.8.186"
 hoplite = "2.9.0"
 jackson = "3.2.1"
 koin = "4.2.2"
@@ -20,7 +20,7 @@ log4j = "2.26.1"
 logback = "1.6.0"
 mockk = "1.14.11"
 okhttp = "5.4.0"
-yauaa = "8.1.1"
+yauaa = "8.2.0"
 
 [libraries]
 classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
