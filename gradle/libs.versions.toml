@@ -6,10 +6,10 @@ kover = "0.9.9"
 ktlint = "14.2.0"
 ktlint-cli = "1.8.0"
 shadow = "9.6.1"
-versions-plugin = "0.59.0"
+versions-plugin = "0.61.0"
 
 # Libs
-classgraph = "4.8.186"
+classgraph = "4.8.189"
 hoplite = "2.9.0"
 jackson = "3.2.1"
 koin = "4.2.2"
