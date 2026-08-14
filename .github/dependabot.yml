@@ -13,6 +13,19 @@ updates:
           - "minor"
           - "patch"
 
+  # --- npm (semantic-release toolchain) ---
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
   # --- Gradle ---
   - package-ecosystem: "gradle"
     directory: "/"

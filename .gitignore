@@ -31,3 +31,6 @@ gradle-app.setting
 
 # Java heap dump
 *.hprof
+
+### Node ###
+node_modules/
