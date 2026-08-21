@@ -9,17 +9,17 @@ shadow = "9.6.1"
 versions-plugin = "0.61.0"
 
 # Libs
-classgraph = "4.8.189"
+classgraph = "4.8.192"
 hoplite = "2.9.0"
-jackson = "3.2.1"
+jackson = "3.2.2"
 koin = "4.2.2"
-kotest = "6.2.3"
+kotest = "6.2.4"
 kotlin-coroutines = "1.11.0"
 ktor = "3.5.2"
 log4j = "2.26.1"
-logback = "1.6.2"
+logback = "1.6.3"
 mockk = "1.14.11"
-okhttp = "5.4.0"
+okhttp = "5.5.0"
 yauaa = "8.2.0"
 
 [libraries]
