@@ -237,6 +237,11 @@
             },
             "player": {
               "properties": {
+                "language": {
+                  "type": "keyword",
+                  "ignore_above": 256,
+                  "eager_global_ordinals": true
+                },
                 "name": {
                   "type": "keyword",
                   "ignore_above": 256,
