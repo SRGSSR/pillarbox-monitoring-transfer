@@ -10,7 +10,7 @@ versions-plugin = "0.64.0"
 
 # Libs
 classgraph = "4.8.196"
-hoplite = "2.9.0"
+hoplite = "3.0.0"
 jackson = "3.2.3"
 koin = "4.2.2"
 kotest = "6.2.5"
