@@ -9,7 +9,7 @@ shadow = "9.6.1"
 versions-plugin = "0.66.0"
 
 # Libs
-classgraph = "4.8.196"
+classgraph = "6.0.0"
 hoplite = "3.0.3"
 jackson = "3.2.3"
 koin = "4.2.2"
