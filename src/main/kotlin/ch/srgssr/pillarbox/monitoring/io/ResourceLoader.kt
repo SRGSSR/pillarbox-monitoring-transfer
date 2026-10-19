@@ -8,11 +8,11 @@ import java.io.IOException
 /**
  * Utility object for loading resources from the classpath using ClassGraph.
  *
- * Scans the entire classpath at initialization and provides convenient
- * helper functions for retrieving single or multiple resources.
+ * Scans the `opensearch` and `mappings` classpath directories at initialization
+ * and provides convenient helper functions for retrieving single or multiple resources.
  */
 object ResourceLoader {
-  private val scanResult = ClassGraph().acceptPaths("").scan()
+  private val scanResult = ClassGraph().enableClasspath().acceptPaths("opensearch", "mappings").scan()
 
   /**
    * Retrieves a single resource at the exact given [path].
