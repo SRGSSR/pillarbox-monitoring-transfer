@@ -246,6 +246,9 @@
                 }
               }
             },
+            "metadata_headers": {
+              "type": "flat_object"
+            },
             "os": {
               "properties": {
                 "name": {
