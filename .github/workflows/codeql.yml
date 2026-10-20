@@ -34,7 +34,7 @@ jobs:
         if: ${{ matrix.language == 'java-kotlin' }}
         uses: actions/setup-java@v6
         with:
-          java-version: '24'
+          java-version: '25'
           distribution: 'temurin'
           cache: 'gradle'
 
