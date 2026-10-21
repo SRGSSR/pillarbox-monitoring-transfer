@@ -67,7 +67,7 @@ class CapabilitiesProcessorTest :
       testCase("HW_SECURE_ALL", "SL3000"),
       testCase("SL3000", "SL3000"),
     ).forEach { (inputLevel, expectedOutputLevel) ->
-      should("detect map playReady robustness level for $inputLevel") {
+      should("detect map play_ready robustness level for $inputLevel") {
         // Given: an input with a play ready capabilities
         val jsonInput =
           """
@@ -79,7 +79,7 @@ class CapabilitiesProcessorTest :
             "version": 1,
             "data": {
               "capabilities": {
-                "playReady": {
+                "play_ready": {
                   "level": "$inputLevel",
                   "hdcp": "1.0"
                 }
@@ -98,10 +98,10 @@ class CapabilitiesProcessorTest :
         // Then: The level is mapped and the hdcp doesn't change
         val dataNode = eventRequest.data as Map<*, *>
         val capabilities = dataNode["capabilities"] as Map<*, *>
-        val widevine = capabilities["playReady"] as Map<*, *>
+        val playReady = capabilities["play_ready"] as Map<*, *>
 
-        widevine["level"] shouldBe expectedOutputLevel
-        widevine["hdcp"] shouldBe "1.0"
+        playReady["level"] shouldBe expectedOutputLevel
+        playReady["hdcp"] shouldBe "1.0"
       }
     }
   }

@@ -32,7 +32,7 @@ internal class CapabilitiesProcessor : DataProcessor {
     val capabilities = data["capabilities"] as? MutableMap<String, Any?> ?: return data
 
     capabilities.mapLevel("widevine", { it.toWidevineLevel() })
-    capabilities.mapLevel("playReady", { it.toPlayReadyLevel() })
+    capabilities.mapLevel("play_ready", { it.toPlayReadyLevel() })
 
     return data
   }
@@ -43,7 +43,7 @@ internal class CapabilitiesProcessor : DataProcessor {
    * The receiver is left untouched when the key system is absent, is not a map, or does not hold a
    * `level` of type [String].
    *
-   * @param keySystem The name of the key system entry to update, e.g. `widevine` or `playReady`.
+   * @param keySystem The name of the key system entry to update, e.g. `widevine` or `play_ready`.
    * @param transform The mapping applied to the raw level value.
    */
   @Suppress("UNCHECKED_CAST")
