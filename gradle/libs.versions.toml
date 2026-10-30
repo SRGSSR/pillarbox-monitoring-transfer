@@ -10,17 +10,17 @@ versions-plugin = "0.66.0"
 
 # Libs
 classgraph = "6.0.0"
-hoplite = "3.0.4"
+hoplite = "3.0.5"
 jackson = "3.2.4"
 koin = "4.2.2"
 kotest = "6.2.6"
 kotlin-coroutines = "1.11.0"
 ktor = "3.6.0"
 log4j = "2.26.1"
-logback = "1.6.5"
+logback = "1.6.6"
 mockk = "1.14.11"
-okhttp = "5.5.0"
-yauaa = "8.2.0"
+okhttp = "5.5.1"
+yauaa = "8.3.0"
 
 [libraries]
 classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
