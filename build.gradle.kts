@@ -16,7 +16,7 @@ group = "ch.srgssr.pillarbox"
 
 java {
   toolchain {
-    languageVersion = JavaLanguageVersion.of(25)
+    languageVersion = JavaLanguageVersion.of(27)
   }
 }
 
@@ -48,8 +48,14 @@ dependencies {
   testImplementation(libs.mockk)
 }
 
+// Kotlin cannot target Java 27 bytecode yet, so both compilers target 26.
+tasks.withType<JavaCompile>().configureEach {
+  options.release = 26
+}
+
 kotlin {
   compilerOptions {
+    jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_26
     freeCompilerArgs.addAll("-Xjsr305=strict")
   }
 }
