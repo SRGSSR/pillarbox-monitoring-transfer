@@ -11,7 +11,7 @@ enabling data visualization and insights through tools like Grafana.
 
 **Prerequisites and Requirements**
 
-- **JDK 25** or higher
+- **JDK 27** or higher
 - **Docker** (optional)
 
 **Setup**
