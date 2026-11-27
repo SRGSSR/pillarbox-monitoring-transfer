@@ -5,6 +5,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     groups:
       action-updates:
         patterns:
@@ -18,6 +20,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     groups:
       npm-dependencies:
         patterns:
@@ -31,6 +35,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     groups:
       gradle-dependencies:
         patterns:
@@ -47,3 +53,19 @@ updates:
         update-types:
           - "minor"
           - "patch"
+
+  # --- Base images of the Dockerfile, pinned by tag and digest ---
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    groups:
+      base-images:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "eclipse-temurin"
+        update-types:
+          - "version-update:semver-major"

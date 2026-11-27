@@ -35,8 +35,8 @@ enabling data visualization and insights through tools like Grafana.
 3. Configuration:
    The application can be configured using environment variables:
    ```bash
-   export config__override__open-search__uri=http://opensearch:9200
-   export config__override__dispatcher-client__uri=http://event-dispatcher:8080/events
+   export OPENSEARCH_URI=http://opensearch:9200
+   export DISPATCHERCLIENT_URI=http://event-dispatcher:8080/events
    ```
 
 **Running with Docker**
@@ -51,8 +51,8 @@ Alternatively, you can build and run the application using Docker:
 2. Run the Docker Container:
    ```bash
    docker run -p 8081:8081 \
-              -e config__override__open-search__uri=http://opensearch:9200 \
-              -e config__override__dispatcher-client__uri=http://event-dispatcher:8080/events \
+              -e OPENSEARCH_URI=http://opensearch:9200 \
+              -e DISPATCHERCLIENT_URI=http://event-dispatcher:8080/events \
               pillarbox-monitoring-transfer
    ```
 
@@ -124,6 +124,15 @@ This project automates its own development workflow using GitHub Actions:
    To deploy a specific version to production, manually trigger the `Promote Version to Stable`
    workflow from the Actions tab, inputting the desired version number (e.g., 1.0.0). This workflow
    tags the selected version as stable in the ECR, and forces a new deployment on ECS.
+
+4. **Scan Workflow**
+   Runs on every pull request to `main`, on every push to `main` and weekly. zizmor audits the
+   workflows. Trivy scans the Dockerfile and the operating system packages of the built image.
+   Both report to the Security tab, beside CodeQL, and fail no job.
+
+5. **Dependency Submission Workflow**
+   Runs on every push to `main`. It sends the runtime dependencies that Gradle resolves to the
+   GitHub dependency graph, so Dependabot alerts cover the Java libraries.
 
 ## Contributing
 
